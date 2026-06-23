@@ -17,8 +17,17 @@ let AdminController = class AdminController {
     constructor(adminService) {
         this.adminService = adminService;
     }
+    getDashboardStats() {
+        return this.adminService.getDashboardStats();
+    }
 };
 exports.AdminController = AdminController;
+__decorate([
+    (0, common_1.Get)('dashboard'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], AdminController.prototype, "getDashboardStats", null);
 exports.AdminController = AdminController = __decorate([
     (0, common_1.Controller)('admin'),
     __metadata("design:paramtypes", [admin_service_1.AdminService])
