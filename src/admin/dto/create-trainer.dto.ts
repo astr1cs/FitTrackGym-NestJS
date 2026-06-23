@@ -3,19 +3,19 @@ import { IsEmail, IsNotEmpty, IsString, IsOptional, IsNumber, MinLength } from '
 export class CreateTrainerDto {
   @IsNotEmpty({ message: 'Name is required' })
   @IsString()
-  name: string;
+  name!: string;
 
   @IsEmail({}, { message: 'Invalid email format' })
   @IsNotEmpty({ message: 'Email is required' })
-  email: string;
+  email!: string;
 
   @IsNotEmpty({ message: 'Password is required' })
   @MinLength(6, { message: 'Password must be at least 6 characters' })
-  password: string;
+  password!: string;
 
   @IsNotEmpty({ message: 'Phone is required' })
   @IsString()
-  phone: string;
+  phone!: string;
 
   @IsOptional()
   @IsString()

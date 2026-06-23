@@ -1,7 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
+import { CreateTrainerDto } from './dto/create-trainer.dto';
 
 // Mock data storage
-const trainers: { is_active: boolean }[] = [];
+type Trainer = CreateTrainerDto & {
+  id: string;
+  is_active: boolean;
+  created_at: string;
+  classesAssigned: number;
+};
+
+const trainers: Trainer[] = [];
+let trainerIdCounter = 1;
 
 @Injectable()
 export class AdminService {
@@ -20,6 +29,30 @@ export class AdminService {
         { type: 'payment', amount: 89.99, member: 'Mike Brown', time: '2026-06-22T09:15:00Z' },
         { type: 'class_full', class: 'Yoga Flow', time: '2026-06-22T08:45:00Z' },
       ],
+    };
+  }
+
+  // Route 2: Create Trainer (POST)
+  createTrainer(createTrainerDto: CreateTrainerDto) {
+    const existingTrainer = trainers.find(t => t.email === createTrainerDto.email);
+
+    if (existingTrainer) {
+      throw new ConflictException('Trainer with this email already exists');
+    }
+
+    const newTrainer: Trainer = {
+      id: `trainer_${trainerIdCounter++}`,
+      ...createTrainerDto,
+      is_active: true,
+      created_at: new Date().toISOString(),
+      classesAssigned: 0,
+    };
+
+    trainers.push(newTrainer);
+
+    return {
+      message: 'Trainer created successfully',
+      trainer: newTrainer,
     };
   }
 }

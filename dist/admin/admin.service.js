@@ -9,6 +9,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AdminService = void 0;
 const common_1 = require("@nestjs/common");
 const trainers = [];
+let trainerIdCounter = 1;
 let AdminService = class AdminService {
     getDashboardStats() {
         return {
@@ -24,6 +25,24 @@ let AdminService = class AdminService {
                 { type: 'payment', amount: 89.99, member: 'Mike Brown', time: '2026-06-22T09:15:00Z' },
                 { type: 'class_full', class: 'Yoga Flow', time: '2026-06-22T08:45:00Z' },
             ],
+        };
+    }
+    createTrainer(createTrainerDto) {
+        const existingTrainer = trainers.find(t => t.email === createTrainerDto.email);
+        if (existingTrainer) {
+            throw new common_1.ConflictException('Trainer with this email already exists');
+        }
+        const newTrainer = {
+            id: `trainer_${trainerIdCounter++}`,
+            ...createTrainerDto,
+            is_active: true,
+            created_at: new Date().toISOString(),
+            classesAssigned: 0,
+        };
+        trainers.push(newTrainer);
+        return {
+            message: 'Trainer created successfully',
+            trainer: newTrainer,
         };
     }
 };

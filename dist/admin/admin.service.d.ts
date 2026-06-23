@@ -1,3 +1,10 @@
+import { CreateTrainerDto } from './dto/create-trainer.dto';
+type Trainer = CreateTrainerDto & {
+    id: string;
+    is_active: boolean;
+    created_at: string;
+    classesAssigned: number;
+};
 export declare class AdminService {
     getDashboardStats(): {
         totalBookings: number;
@@ -30,4 +37,9 @@ export declare class AdminService {
             member?: undefined;
         })[];
     };
+    createTrainer(createTrainerDto: CreateTrainerDto): {
+        message: string;
+        trainer: Trainer;
+    };
 }
+export {};

@@ -1,4 +1,5 @@
 import { AdminService } from './admin.service';
+import { CreateTrainerDto } from './dto/create-trainer.dto';
 export declare class AdminController {
     private readonly adminService;
     constructor(adminService: AdminService);
@@ -32,5 +33,14 @@ export declare class AdminController {
             amount?: undefined;
             member?: undefined;
         })[];
+    };
+    createTrainer(createTrainerDto: CreateTrainerDto): {
+        message: string;
+        trainer: CreateTrainerDto & {
+            id: string;
+            is_active: boolean;
+            created_at: string;
+            classesAssigned: number;
+        };
     };
 }
