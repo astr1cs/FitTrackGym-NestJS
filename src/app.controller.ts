@@ -1,20 +1,12 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
-import { AdminService } from './admin/admin.service';
-import { CreateTrainerDto } from './admin/dto/create-trainer.dto';
+import { Controller, Get } from '@nestjs/common';
+import { AppService } from './app.service';
 
-@Controller('admin')
-export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+@Controller()
+export class AppController {
+  constructor(private readonly appService: AppService) {}
 
-  // Route 1: GET - Dashboard Statistics
-  @Get('dashboard')
-  getDashboardStats() {
-    return this.adminService.getDashboardStats();
-  }
-
-  // Route 2: POST - Create Trainer
-  @Post('trainers')
-  createTrainer(@Body() createTrainerDto: CreateTrainerDto) {
-    return this.adminService.createTrainer(createTrainerDto);
+  @Get()
+  getHello(): string {
+    return this.appService.getHello();
   }
 }
