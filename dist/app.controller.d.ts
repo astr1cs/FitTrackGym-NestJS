@@ -36,10 +36,18 @@ export declare class AdminController {
     };
     createTrainer(createTrainerDto: CreateTrainerDto): {
         message: string;
-        trainer: CreateTrainerDto & {
+        trainer: {
             id: string;
+            name: string;
+            email: string;
+            phone: string;
+            specialty?: string;
+            bio?: string;
+            experience_years?: number;
+            certification?: string;
             is_active: boolean;
             created_at: string;
+            updated_at: string;
             classesAssigned: number;
         };
     };
