@@ -12,12 +12,13 @@ const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
 const admin_module_1 = require("./admin/admin.module");
 const trainer_module_1 = require("./trainer/trainer.module");
+const members_module_1 = require("./members/members.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
-        imports: [admin_module_1.AdminModule, trainer_module_1.TrainerModule],
+        imports: [admin_module_1.AdminModule, trainer_module_1.TrainerModule, members_module_1.MembersModule],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],
     })
