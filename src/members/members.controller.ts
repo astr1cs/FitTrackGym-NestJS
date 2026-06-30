@@ -9,7 +9,12 @@ import {
   Query,
   DefaultValuePipe,
   ParseIntPipe,
+  UseInterceptors,
+  UploadedFile,
+  ParseFilePipe,
+  MaxFileSizeValidator,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { MembersService } from './members.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { CreateBookingDto } from './dto/create-booking.dto';
@@ -26,9 +31,23 @@ export class MembersController {
   }
 
   // Route 2: PUT - Update Profile
+  // Lab Task 2 — Pipes: Category 1 rule — NID image must be no more than 2MB (handled via ParseFilePipe,
+  // since file uploads arrive as multipart/form-data and cannot be validated with class-validator decorators)
   @Put('profile')
-  updateProfile(@Body() updateProfileDto: UpdateProfileDto) {
-    return this.membersService.updateProfile('member_1', updateProfileDto);
+  @UseInterceptors(FileInterceptor('nidImage'))
+  updateProfile(
+    @Body() updateProfileDto: UpdateProfileDto,
+    @UploadedFile(
+      new ParseFilePipe({
+        fileIsRequired: false,
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 2 * 1024 * 1024 }), // 2MB
+        ],
+      }),
+    )
+    nidImage?: Express.Multer.File,
+  ) {
+    return this.membersService.updateProfile('member_1', updateProfileDto, nidImage);
   }
 
   // Route 3: GET - Browse Membership Plans

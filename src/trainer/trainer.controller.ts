@@ -12,6 +12,7 @@ import { TrainerService } from './trainer.service';
 import { CreateClassDto } from './dto/create-class.dto';
 import { UpdateClassDto } from './dto/update-class.dto';
 import { RecordAttendanceDto } from './dto/record-attendance.dto';
+import { UpdateTrainerProfileDto } from './dto/update-trainer-profile.dto';
 
 @Controller('trainer')
 export class TrainerController {
@@ -77,5 +78,18 @@ export class TrainerController {
   @Get('clients')
   getClients() {
     return this.trainerService.getClients();
+  }
+
+  // Route 9: GET - Get own profile
+  @Get('profile')
+  getProfile() {
+    return this.trainerService.getProfile();
+  }
+
+  // Route 10: PATCH - Update own profile
+  // Lab Task 2 — Pipes: Category 2 rules (aiub.edu email, password uppercase, gender enum, numeric phone)
+  @Patch('profile')
+  updateProfile(@Body() updateTrainerProfileDto: UpdateTrainerProfileDto) {
+    return this.trainerService.updateProfile(updateTrainerProfileDto);
   }
 }

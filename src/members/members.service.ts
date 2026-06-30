@@ -120,7 +120,7 @@ export class MembersService {
   }
 
   // Route 2: PUT - Update Profile
-  updateProfile(memberId: string = 'member_1', updateProfileDto: UpdateProfileDto) {
+  updateProfile(memberId: string = 'member_1', updateProfileDto: UpdateProfileDto, nidImage?: Express.Multer.File) {
     const memberIndex = members.findIndex(m => m.id === memberId);
     if (memberIndex === -1) {
       throw new NotFoundException(`Member with ID ${memberId} not found`);
@@ -129,6 +129,8 @@ export class MembersService {
     members[memberIndex] = {
       ...members[memberIndex],
       ...updateProfileDto,
+      // Lab Task 2 — Pipes: NID image size/type validated by ParseFilePipe in the controller; we just store the filename here
+      ...(nidImage ? { nidImagePath: nidImage.originalname } : {}),
       updated_at: new Date().toISOString(),
     };
 

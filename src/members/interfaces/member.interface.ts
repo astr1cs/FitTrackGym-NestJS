@@ -6,6 +6,8 @@ export interface Member {
   date_of_birth?: string;
   gender?: string;
   fitness_goal?: string;
+  nid?: string;
+  nidImagePath?: string;
   membership: {
     plan: string;
     start_date: string;

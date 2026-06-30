@@ -2,13 +2,25 @@ import { Injectable, NotFoundException, ConflictException } from '@nestjs/common
 import { CreateClassDto } from './dto/create-class.dto';
 import { UpdateClassDto } from './dto/update-class.dto';
 import { RecordAttendanceDto } from './dto/record-attendance.dto';
-import { ClassSession, AttendanceRecord, Client } from './interfaces/class.interface';
+import { UpdateTrainerProfileDto } from './dto/update-trainer-profile.dto';
+import { ClassSession, AttendanceRecord, Client, TrainerProfile } from './interfaces/class.interface';
 
 const classSessions: ClassSession[] = [];
 const attendanceRecords: AttendanceRecord[] = [];
 const clients: Client[] = [];
 let classIdCounter = 1;
 let attendanceIdCounter = 1;
+
+// Lab Task 2 — Pipes: Category 2 — mock record for the logged-in trainer's own profile
+const trainerProfile: TrainerProfile = {
+  id: 'trainer_1',
+  name: 'Alex Carter',
+  email: 'alex.carter@aiub.edu',
+  password: 'Coach123',
+  phone: '01711223344',
+  gender: 'male',
+  updated_at: new Date().toISOString(),
+};
 
 // Seed initial mock data
 if (clients.length === 0) {
@@ -204,6 +216,27 @@ export class TrainerService {
     return {
       data: clients,
       total: clients.length,
+    };
+  }
+
+  // Route 9: Get own profile (GET /trainer/profile)
+  getProfile() {
+    const { password, ...profileWithoutPassword } = trainerProfile;
+    return profileWithoutPassword;
+  }
+
+  // Route 10: Update own profile (PATCH /trainer/profile)
+  // Lab Task 2 — Pipes: Category 2 rules validated via UpdateTrainerProfileDto
+  updateProfile(updateTrainerProfileDto: UpdateTrainerProfileDto) {
+    Object.assign(trainerProfile, updateTrainerProfileDto, {
+      updated_at: new Date().toISOString(),
+    });
+
+    const { password, ...profileWithoutPassword } = trainerProfile;
+
+    return {
+      message: 'Profile updated successfully',
+      profile: profileWithoutPassword,
     };
   }
 

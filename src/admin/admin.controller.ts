@@ -7,8 +7,14 @@ import {
   Delete,
   Body, 
   Param, 
-  Query 
+  Query,
+  UseInterceptors,
+  UploadedFile,
+  ParseFilePipe,
+  FileTypeValidator,
+  MaxFileSizeValidator,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { AdminService } from './admin.service';
 import { CreateTrainerDto } from './dto/create-trainer.dto';
 import { UpdateTrainerDto } from './dto/update-trainer.dto';
@@ -25,9 +31,24 @@ export class AdminController {
   }
 
   // Route 2: POST - Create Trainer
+  // Lab Task 2 — Pipes: Category 3 rule — certification file must be a PDF (handled via ParseFilePipe,
+  // since file uploads arrive as multipart/form-data and cannot be validated with class-validator decorators)
   @Post('trainers')
-  createTrainer(@Body() createTrainerDto: CreateTrainerDto) {
-    return this.adminService.createTrainer(createTrainerDto);
+  @UseInterceptors(FileInterceptor('certificateFile'))
+  createTrainer(
+    @Body() createTrainerDto: CreateTrainerDto,
+    @UploadedFile(
+      new ParseFilePipe({
+        fileIsRequired: false,
+        validators: [
+          new FileTypeValidator({ fileType: 'application/pdf' }),
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 5MB cap for certificate PDFs
+        ],
+      }),
+    )
+    certificateFile?: Express.Multer.File,
+  ) {
+    return this.adminService.createTrainer(createTrainerDto, certificateFile);
   }
 
   // Route 3: GET - Get All Trainers with Filters

@@ -44,7 +44,7 @@ export class AdminService {
   }
 
   // Route 2: Create Trainer (POST)
-  createTrainer(createTrainerDto: CreateTrainerDto) {
+  createTrainer(createTrainerDto: CreateTrainerDto, certificateFile?: Express.Multer.File) {
     // Check if trainer already exists
     const existingTrainer = trainers.find(t => t.email === createTrainerDto.email);
     if (existingTrainer) {
@@ -61,7 +61,8 @@ export class AdminService {
       specialty: createTrainerDto.specialty,
       bio: createTrainerDto.bio,
       experience_years: createTrainerDto.experience_years,
-      certification: createTrainerDto.certification,
+      // Lab Task 2 — Pipes: certification PDF validated by ParseFilePipe in the controller; we just store the filename here
+      certification: certificateFile?.originalname ?? createTrainerDto.certification,
       is_active: true,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
