@@ -13,6 +13,8 @@ import { CreateClassDto } from './dto/create-class.dto';
 import { UpdateClassDto } from './dto/update-class.dto';
 import { RecordAttendanceDto } from './dto/record-attendance.dto';
 import { UpdateTrainerProfileDto } from './dto/update-trainer-profile.dto';
+import { CreateTrainerUserDto } from './dto/create-trainer-user.dto';
+import { UpdateStatusDto } from './dto/update-status.dto';
 
 @Controller('trainer')
 export class TrainerController {
@@ -91,5 +93,28 @@ export class TrainerController {
   @Patch('profile')
   updateProfile(@Body() updateTrainerProfileDto: UpdateTrainerProfileDto) {
     return this.trainerService.updateProfile(updateTrainerProfileDto);
+  }
+
+  // ─── Lab Task 3 — TypeORM: Category 1 operations ─────────────────────────
+
+  // Operation 1: Create a user
+  @Post('users')
+  createTrainerUser(@Body() createTrainerUserDto: CreateTrainerUserDto) {
+    return this.trainerService.createTrainerUser(createTrainerUserDto);
+  }
+
+  // Operation 2: Change the status of a user to either 'active' or 'inactive'
+  @Patch('users/:id/status')
+  updateStatus(
+    @Param('id') id: string,
+    @Body() updateStatusDto: UpdateStatusDto,
+  ) {
+    return this.trainerService.updateStatus(Number(id), updateStatusDto);
+  }
+
+  // Operation 3: Retrieve a list of users based on status
+  @Get('users')
+  getUsersByStatus(@Query('status') status?: string) {
+    return this.trainerService.getUsersByStatus(status);
   }
 }

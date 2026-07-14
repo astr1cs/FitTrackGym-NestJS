@@ -6,6 +6,7 @@ import { AdminModule } from './admin/admin.module';
 import { TrainerModule } from './trainer/trainer.module';
 import { MembersModule } from './members/members.module';
 import { AdminUserEntity } from './admin/entities/admin-user.entity';
+import { TrainerUserEntity } from './trainer/entities/trainer-user.entity';
 
 @Module({
   imports: [
@@ -16,7 +17,7 @@ import { AdminUserEntity } from './admin/entities/admin-user.entity';
       username: 'postgres',     // change to your postgres username
       password: 'admin', // change to your postgres password
       database: 'fittrack_db',  // change to your database name
-      entities: [AdminUserEntity],
+      entities: [AdminUserEntity, TrainerUserEntity],
       synchronize: true,        // auto-creates tables from entities — only for dev
     }),
     AdminModule,

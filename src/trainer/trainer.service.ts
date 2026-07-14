@@ -1,9 +1,14 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { CreateClassDto } from './dto/create-class.dto';
 import { UpdateClassDto } from './dto/update-class.dto';
 import { RecordAttendanceDto } from './dto/record-attendance.dto';
 import { UpdateTrainerProfileDto } from './dto/update-trainer-profile.dto';
 import { ClassSession, AttendanceRecord, Client, TrainerProfile } from './interfaces/class.interface';
+import { TrainerUserEntity } from './entities/trainer-user.entity';
+import { CreateTrainerUserDto } from './dto/create-trainer-user.dto';
+import { UpdateStatusDto } from './dto/update-status.dto';
 
 const classSessions: ClassSession[] = [];
 const attendanceRecords: AttendanceRecord[] = [];
@@ -62,6 +67,11 @@ if (classSessions.length === 0) {
 
 @Injectable()
 export class TrainerService {
+  constructor(
+    @InjectRepository(TrainerUserEntity)
+    private readonly trainerUserRepository: Repository<TrainerUserEntity>,
+  ) {}
+
   // Route 1: Get all classes (GET /trainer/classes)
   getClasses(filters: { status?: string; page?: number; limit?: number }) {
     let filteredClasses = [...classSessions];
@@ -243,5 +253,33 @@ export class TrainerService {
   // Helper method for testing
   getAllClasses() {
     return classSessions;
+  }
+
+  // ─── Lab Task 3 — TypeORM: Category 1 operations ─────────────────────────
+
+  // Operation 1: Create a user
+  async createTrainerUser(dto: CreateTrainerUserDto): Promise<TrainerUserEntity> {
+    const user = this.trainerUserRepository.create({
+      fullName: dto.fullName,
+      age: dto.age,
+      status: dto.status ?? 'active',
+    });
+    return await this.trainerUserRepository.save(user);
+  }
+
+  // Operation 2: Change the status of a user to either 'active' or 'inactive'
+  async updateStatus(id: number, dto: UpdateStatusDto): Promise<TrainerUserEntity> {
+    const user = await this.trainerUserRepository.findOne({ where: { id } });
+    if (!user) throw new NotFoundException(`Trainer User with ID ${id} not found`);
+    user.status = dto.status;
+    return await this.trainerUserRepository.save(user);
+  }
+
+  // Operation 3: Retrieve a list of users based on status
+  async getUsersByStatus(status?: string): Promise<TrainerUserEntity[]> {
+    if (status) {
+      return await this.trainerUserRepository.find({ where: { status } });
+    }
+    return await this.trainerUserRepository.find();
   }
 }
