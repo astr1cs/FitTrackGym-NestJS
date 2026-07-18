@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AdminModule } from './admin/admin.module';
@@ -11,16 +12,27 @@ import { TrainerEntity } from './admin/entities/trainer.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: 'postgres',
-      password: 'admin',
-      database: 'fittrack_db',
-      entities: [AdminUserEntity, AdminProfileEntity, TrainerEntity],
-      synchronize: true,
+    // Load .env globally
+    ConfigModule.forRoot({
+      isGlobal: true,
     }),
+
+    // TypeORM using .env values
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        type: 'postgres',
+        host: config.get('DB_HOST'),
+        port: parseInt(config.get('DB_PORT') ?? '5432'),
+        username: config.get('DB_USERNAME'),
+        password: config.get('DB_PASSWORD'),
+        database: config.get('DB_NAME'),
+        entities: [AdminUserEntity, AdminProfileEntity, TrainerEntity],
+        synchronize: true,
+      }),
+    }),
+
     AdminModule,
     TrainerModule,
     MembersModule,

@@ -8,7 +8,9 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
+import { MailerService } from '@nestjs-modules/mailer';
 import * as bcrypt from 'bcrypt';
+
 import { AdminUserEntity } from '../entities/admin-user.entity';
 import { AdminProfileEntity } from '../entities/admin-profile.entity';
 import { RegisterDto } from '../dto/register.dto';
@@ -24,11 +26,11 @@ export class AuthService {
     private readonly adminProfileRepository: Repository<AdminProfileEntity>,
 
     private readonly jwtService: JwtService,
+    private readonly mailerService: MailerService,
   ) {}
 
-  // Register — bcrypt password + create admin user + create empty profile
+  // Register
   async register(dto: RegisterDto) {
-    // Check if email already exists
     const existing = await this.adminUserRepository.findOne({
       where: { email: dto.email },
     });
@@ -36,7 +38,7 @@ export class AuthService {
       throw new ConflictException('Email already registered');
     }
 
-    // BCrypt — hash password before saving
+    // BCrypt — hash password
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
     // Create admin user
@@ -56,6 +58,27 @@ export class AuthService {
     });
     await this.adminProfileRepository.save(profile);
 
+    // Mailer — send welcome email after successful registration
+    try {
+      await this.mailerService.sendMail({
+        to: savedUser.email,
+        subject: 'Welcome to FitTrack Admin',
+        html: `
+          <h2>Welcome to FitTrack!</h2>
+          <p>Hi ${dto.fullName ?? 'Admin'},</p>
+          <p>Your admin account has been successfully created.</p>
+          <p><strong>Account ID:</strong> ${savedUser.id}</p>
+          <p><strong>Email:</strong> ${savedUser.email}</p>
+          <p>You can now log in and manage your gym.</p>
+          <br/>
+          <p>— FitTrack Team</p>
+        `,
+      });
+    } catch (mailError) {
+      // Don't fail registration if mail fails — just log it
+      console.warn('Welcome email failed to send:', mailError.message);
+    }
+
     return {
       message: 'Admin registered successfully',
       id: savedUser.id,
@@ -63,9 +86,8 @@ export class AuthService {
     };
   }
 
-  // Login — verify password + return JWT
+  // Login
   async login(dto: LoginDto) {
-    // Find user by email
     const user = await this.adminUserRepository.findOne({
       where: { email: dto.email },
     });
@@ -73,7 +95,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    // BCrypt — compare incoming password with stored hash
+    // BCrypt — compare password with stored hash
     const passwordMatch = await bcrypt.compare(dto.password, user.password);
     if (!passwordMatch) {
       throw new UnauthorizedException('Invalid email or password');
