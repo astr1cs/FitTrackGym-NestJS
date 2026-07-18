@@ -27,3 +27,14 @@ export interface Client {
   phone: string;
   joinedDate: string;
 }
+
+// Lab Task 2 — Pipes: Category 2 — trainer's own self-service profile record
+export interface TrainerProfile {
+  id: string;
+  name: string;
+  email: string;
+  password: string;
+  phone: string;
+  gender?: 'male' | 'female';
+  updated_at: string;
+}
