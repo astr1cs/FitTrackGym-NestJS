@@ -1,12 +1,22 @@
-import { IsString, IsOptional, IsNumber, IsBoolean, MinLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 export class UpdateTrainerDto {
   @IsOptional()
   @IsString()
+  @MaxLength(100)
   name?: string;
 
+  // Lab Task 2 — Pipes: Category 3 rule — phone starts with 01
   @IsOptional()
   @IsString()
+  @Matches(/^01\d+$/, { message: 'Phone number must start with 01' })
   phone?: string;
 
   @IsOptional()
@@ -14,22 +24,14 @@ export class UpdateTrainerDto {
   specialty?: string;
 
   @IsOptional()
-  @IsString()
-  bio?: string;
-
-  @IsOptional()
-  @IsNumber()
-  experience_years?: number;
-
-  @IsOptional()
-  @IsString()
-  certification?: string;
-
-  @IsOptional()
   @IsBoolean()
-  is_active?: boolean;
+  isActive?: boolean;
 
+  // Lab Task 2 — Pipes: Category 3 rule — password min 6 + lowercase
   @IsOptional()
   @MinLength(6, { message: 'Password must be at least 6 characters' })
+  @Matches(/(?=.*[a-z])/, {
+    message: 'Password must contain at least one lowercase character',
+  })
   password?: string;
 }

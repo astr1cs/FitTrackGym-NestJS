@@ -1,7 +1,15 @@
-import { IsEmail, IsNotEmpty, IsString, IsOptional, IsNumber, MinLength, Matches } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+  MinLength,
+  Matches,
+} from 'class-validator';
 
 export class CreateTrainerDto {
-  // Lab Task 2 — Pipes: Category 3 rule — name must not contain any special character
+  // Lab Task 2 — Pipes: Category 3 rule — name must not contain special characters
   @IsNotEmpty({ message: 'Name is required' })
   @IsString()
   @Matches(/^[A-Za-z0-9\s]+$/, {
@@ -13,7 +21,7 @@ export class CreateTrainerDto {
   @IsNotEmpty({ message: 'Email is required' })
   email!: string;
 
-  // Lab Task 2 — Pipes: Category 3 rule — password min 6 chars and must contain one lowercase character
+  // Lab Task 2 — Pipes: Category 3 rule — password min 6 + lowercase
   @IsNotEmpty({ message: 'Password is required' })
   @MinLength(6, { message: 'Password must be at least 6 characters' })
   @Matches(/(?=.*[a-z])/, {
@@ -21,7 +29,7 @@ export class CreateTrainerDto {
   })
   password!: string;
 
-  // Lab Task 2 — Pipes: Category 3 rule — phone number must start with 01
+  // Lab Task 2 — Pipes: Category 3 rule — phone starts with 01
   @IsNotEmpty({ message: 'Phone is required' })
   @IsString()
   @Matches(/^01\d+$/, {
@@ -35,13 +43,6 @@ export class CreateTrainerDto {
 
   @IsOptional()
   @IsString()
-  bio?: string;
-
-  @IsOptional()
-  @IsNumber()
-  experience_years?: number;
-
-  @IsOptional()
-  @IsString()
+  @MaxLength(255)
   certification?: string;
 }

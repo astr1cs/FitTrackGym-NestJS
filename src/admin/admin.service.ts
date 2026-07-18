@@ -1,163 +1,357 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
+import * as bcrypt from 'bcrypt';
+
 import { AdminUserEntity } from './entities/admin-user.entity';
-import { CreateAdminUserDto } from './dto/create-admin-user.dto';
-import { UpdatePhoneDto } from './dto/update-phone.dto';
+import { AdminProfileEntity } from './entities/admin-profile.entity';
+import { TrainerEntity } from './entities/trainer.entity';
+
 import { CreateTrainerDto } from './dto/create-trainer.dto';
 import { UpdateTrainerDto } from './dto/update-trainer.dto';
+import { UpdatePhoneDto } from './dto/update-phone.dto';
+import { CreateAdminUserDto } from './dto/create-admin-user.dto';
 import { CreateAnnouncementDto } from './dto/create-announcement.dto';
-import { Trainer, Announcement } from './interfaces/trainer.interface';
+import { Announcement } from './interfaces/trainer.interface';
 
-// ─── existing mock data (Lab Task 1 & 2 — keep untouched) ───────────────────
-const trainers: Trainer[] = [];
+// ─── announcements still use mock array (no entity needed for lab) ───────────
 const announcements: Announcement[] = [];
-let trainerIdCounter = 1;
 let announcementIdCounter = 1;
 
 @Injectable()
 export class AdminService {
-
   constructor(
     @InjectRepository(AdminUserEntity)
     private readonly adminUserRepository: Repository<AdminUserEntity>,
+
+    @InjectRepository(AdminProfileEntity)
+    private readonly adminProfileRepository: Repository<AdminProfileEntity>,
+
+    @InjectRepository(TrainerEntity)
+    private readonly trainerRepository: Repository<TrainerEntity>,
   ) {}
 
-  // ─── existing methods (Lab Task 1 & 2 — unchanged) ───────────────────────
+  // ─── Dashboard ────────────────────────────────────────────────────────────
 
-  // Route 1: Dashboard Statistics (GET)
-  getDashboardStats() {
+  async getDashboardStats() {
+    const totalAdmins = await this.adminUserRepository.count();
+    const totalTrainers = await this.trainerRepository.count();
+    const activeTrainers = await this.trainerRepository.count({
+      where: { isActive: true },
+    });
+
     return {
-      totalBookings: 156,
-      totalActiveMembers: 342,
-      totalActiveTrainers: trainers.filter(t => t.is_active).length,
-      totalPendingPayments: 23,
-      revenueToday: 1250,
-      revenueThisMonth: 45230,
-      upcomingClasses: 12,
-      recentActivities: [
-        { 
-          type: 'new_member', 
-          name: 'Sarah Johnson', 
-          time: new Date().toISOString() 
-        },
-        { 
-          type: 'payment', 
-          amount: 89.99, 
-          member: 'Mike Brown', 
-          time: new Date().toISOString() 
-        },
-        { 
-          type: 'class_full', 
-          class: 'Yoga Flow', 
-          time: new Date().toISOString() 
-        },
-      ],
+      totalAdmins,
+      totalTrainers,
+      activeTrainers,
+      totalAnnouncements: announcements.length,
     };
   }
 
-  // Route 2: Create Trainer (POST)
-  createTrainer(createTrainerDto: CreateTrainerDto, certificateFile?: Express.Multer.File) {
-    const existingTrainer = trainers.find(t => t.email === createTrainerDto.email);
-    if (existingTrainer) {
-      throw new ConflictException('Trainer with this email already exists');
+  // ─── Lab Task 3 — Category 2: AdminUser operations ───────────────────────
+
+  // Operation 1: Create admin user (used internally, register handled in AuthService)
+  async createAdminUser(dto: CreateAdminUserDto): Promise<AdminUserEntity> {
+    const existing = await this.adminUserRepository.findOne({
+      where: { email: dto.email },
+    });
+    if (existing) {
+      throw new ConflictException('Email already registered');
     }
-    const newTrainer: Trainer = {
-      id: `trainer_${trainerIdCounter++}`,
-      name: createTrainerDto.name,
-      email: createTrainerDto.email,
-      password: createTrainerDto.password,
-      phone: createTrainerDto.phone,
-      specialty: createTrainerDto.specialty,
-      bio: createTrainerDto.bio,
-      experience_years: createTrainerDto.experience_years,
-      certification: certificateFile?.originalname ?? createTrainerDto.certification,
-      is_active: true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      classesAssigned: 0,
-    };
-    trainers.push(newTrainer);
-    const { password, ...trainerWithoutPassword } = newTrainer;
-    return { message: 'Trainer created successfully', trainer: trainerWithoutPassword };
-  }
 
-  // Route 3: Get Trainers with Filters (GET)
-  getTrainers(filters: { 
-    specialty?: string; 
-    isActive?: boolean; 
-    page?: number; 
-    limit?: number 
-  }) {
-    let filteredTrainers: Trainer[] = [...trainers];
-    if (filters.specialty) {
-      filteredTrainers = filteredTrainers.filter(
-        t => t.specialty?.toLowerCase().includes(filters.specialty!.toLowerCase())
+    const user = this.adminUserRepository.create({
+      fullName: dto.fullName ?? null,
+      phone: dto.phone ?? null,
+      isActive: dto.isActive ?? true,
+    });
+
+    try {
+      return await this.adminUserRepository.save(user);
+    } catch (error) {
+      throw new HttpException(
+        'Failed to create admin user',
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
-    if (filters.isActive !== undefined) {
-      filteredTrainers = filteredTrainers.filter(t => t.is_active === filters.isActive);
+  }
+
+  // Operation 2: Update phone via profile (One to One relationship)
+  async updatePhone(adminId: string, dto: UpdatePhoneDto): Promise<AdminProfileEntity> {
+    const profile = await this.adminProfileRepository.findOne({
+      where: { adminUser: { id: adminId } },
+      relations: ['adminUser'],
+    });
+
+    if (!profile) {
+      throw new NotFoundException(`Profile for admin ${adminId} not found`);
     }
-    const trainersWithoutPassword = filteredTrainers.map(({ password, ...rest }) => rest);
-    const page = filters.page || 1;
-    const limit = filters.limit || 10;
-    const startIndex = (page - 1) * limit;
-    return {
-      data: trainersWithoutPassword.slice(startIndex, startIndex + limit),
-      total: filteredTrainers.length,
-      page,
-      limit,
-      totalPages: Math.ceil(filteredTrainers.length / limit),
-    };
+
+    profile.phone = dto.phone;
+
+    try {
+      return await this.adminProfileRepository.save(profile);
+    } catch (error) {
+      throw new HttpException(
+        'Failed to update phone',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
-  // Route 4: Get Trainer by ID (GET)
-  getTrainerById(id: string) {
-    const trainer = trainers.find(t => t.id === id);
-    if (!trainer) throw new NotFoundException(`Trainer with ID ${id} not found`);
-    const { password, ...trainerWithoutPassword } = trainer;
-    return trainerWithoutPassword;
+  // Operation 3: Get users with null fullName in profile (One to One)
+  async getUsersWithNullFullName(): Promise<AdminProfileEntity[]> {
+    return await this.adminProfileRepository.find({
+      where: { fullName: IsNull() },
+      relations: ['adminUser'],
+    });
   }
 
-  // Route 5: Update Trainer (PUT)
-  updateTrainer(id: string, updateTrainerDto: UpdateTrainerDto) {
-    const trainerIndex = trainers.findIndex(t => t.id === id);
-    if (trainerIndex === -1) throw new NotFoundException(`Trainer with ID ${id} not found`);
-    const updatedTrainer: Trainer = {
-      ...trainers[trainerIndex],
-      ...updateTrainerDto,
-      updated_at: new Date().toISOString(),
-    };
-    trainers[trainerIndex] = updatedTrainer;
-    const { password, ...trainerWithoutPassword } = updatedTrainer;
-    return { message: 'Trainer updated successfully', trainer: trainerWithoutPassword };
+  // Operation 4: Remove admin user by id
+  async removeAdminUser(id: string): Promise<{ message: string }> {
+    const user = await this.adminUserRepository.findOne({
+      where: { id },
+      relations: ['profile'],
+    });
+
+    if (!user) {
+      throw new NotFoundException(`Admin user with ID ${id} not found`);
+    }
+
+    try {
+      await this.adminUserRepository.remove(user);
+      return { message: `Admin user ${id} removed successfully` };
+    } catch (error) {
+      throw new HttpException(
+        'Failed to remove admin user',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
-  // Route 6: Deactivate Trainer (PATCH)
-  deactivateTrainer(id: string) {
-    const trainerIndex = trainers.findIndex(t => t.id === id);
-    if (trainerIndex === -1) throw new NotFoundException(`Trainer with ID ${id} not found`);
-    trainers[trainerIndex].is_active = false;
-    trainers[trainerIndex].updated_at = new Date().toISOString();
-    const { password, ...trainerWithoutPassword } = trainers[trainerIndex];
-    return { message: 'Trainer deactivated successfully', trainer: trainerWithoutPassword };
+  // ─── Profile routes (One to One relationship) ─────────────────────────────
+
+  // Get own profile — loads AdminUser with linked AdminProfile
+  async getProfile(adminId: string): Promise<AdminUserEntity> {
+    const user = await this.adminUserRepository.findOne({
+      where: { id: adminId },
+      relations: ['profile'],  // One to One — loads profile alongside user
+    });
+
+    if (!user) {
+      throw new NotFoundException('Admin user not found');
+    }
+
+    return user;
   }
 
-  // Route 7: Delete Trainer (DELETE)
-  deleteTrainer(id: string) {
-    const trainerIndex = trainers.findIndex(t => t.id === id);
-    if (trainerIndex === -1) throw new NotFoundException(`Trainer with ID ${id} not found`);
-    trainers.splice(trainerIndex, 1);
-    return { message: 'Trainer deleted successfully' };
+  // Update own profile
+  async updateProfile(
+    adminId: string,
+    data: { fullName?: string; phone?: string; country?: string },
+  ): Promise<AdminProfileEntity> {
+    const profile = await this.adminProfileRepository.findOne({
+      where: { adminUser: { id: adminId } },
+      relations: ['adminUser'],
+    });
+
+    if (!profile) {
+      throw new NotFoundException('Profile not found');
+    }
+
+    if (data.fullName !== undefined) profile.fullName = data.fullName;
+    if (data.phone !== undefined) profile.phone = data.phone;
+    if (data.country !== undefined) profile.country = data.country;
+
+    try {
+      return await this.adminProfileRepository.save(profile);
+    } catch (error) {
+      throw new HttpException(
+        'Failed to update profile',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
-  // Route 8: Create Announcement (POST)
-  createAnnouncement(announcementDto: CreateAnnouncementDto) {
+  // ─── Trainer routes (One to Many relationship) ────────────────────────────
+
+  // Create trainer — linked to admin (One to Many)
+  async createTrainer(
+    adminId: string,
+    dto: CreateTrainerDto,
+    certificateFile?: Express.Multer.File,
+  ): Promise<TrainerEntity> {
+    // Check admin exists
+    const admin = await this.adminUserRepository.findOne({
+      where: { id: adminId },
+    });
+    if (!admin) {
+      throw new NotFoundException('Admin user not found');
+    }
+
+    // Check trainer email not taken
+    const existing = await this.trainerRepository.findOne({
+      where: { email: dto.email },
+    });
+    if (existing) {
+      throw new ConflictException('Trainer with this email already exists');
+    }
+
+    // BCrypt — hash trainer password before saving
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
+
+    const trainer = this.trainerRepository.create({
+      name: dto.name,
+      email: dto.email,
+      password: hashedPassword,
+      phone: dto.phone,
+      specialty: dto.specialty ?? null,
+      isActive: true,
+      certification: certificateFile?.originalname ?? dto.certification ?? null,
+      createdBy: admin,  // One to Many — link trainer to admin
+    });
+
+    try {
+      const saved = await this.trainerRepository.save(trainer);
+      // Remove password from response
+      const { password, ...result } = saved;
+      return result as TrainerEntity;
+    } catch (error) {
+      throw new HttpException(
+        'Failed to create trainer',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  // Get all trainers — loads with their createdBy admin (One to Many)
+  async getTrainers(): Promise<Partial<TrainerEntity>[]> {
+    const trainers = await this.trainerRepository.find({
+      relations: ['createdBy'],  // One to Many — shows which admin created each trainer
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        specialty: true,
+        isActive: true,
+        createdAt: true,
+        createdBy: {
+          id: true,
+          email: true,
+        },
+      },
+    });
+
+    return trainers;
+  }
+
+  // Get single trainer by id
+  async getTrainerById(id: number): Promise<Partial<TrainerEntity>> {
+    const trainer = await this.trainerRepository.findOne({
+      where: { id },
+      relations: ['createdBy'],
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        specialty: true,
+        isActive: true,
+        createdAt: true,
+        createdBy: {
+          id: true,
+          email: true,
+        },
+      },
+    });
+
+    if (!trainer) {
+      throw new NotFoundException(`Trainer with ID ${id} not found`);
+    }
+
+    return trainer;
+  }
+
+  // Update trainer
+  async updateTrainer(
+    id: number,
+    dto: UpdateTrainerDto,
+  ): Promise<Partial<TrainerEntity>> {
+    const trainer = await this.trainerRepository.findOne({ where: { id } });
+
+    if (!trainer) {
+      throw new NotFoundException(`Trainer with ID ${id} not found`);
+    }
+
+    if (dto.name) trainer.name = dto.name;
+    if (dto.phone) trainer.phone = dto.phone;
+    if (dto.specialty) trainer.specialty = dto.specialty;
+    if (dto.isActive !== undefined) trainer.isActive = dto.isActive;
+
+    // BCrypt — rehash if password is being updated
+    if (dto.password) {
+      trainer.password = await bcrypt.hash(dto.password, 10);
+    }
+
+    try {
+      const saved = await this.trainerRepository.save(trainer);
+      const { password, ...result } = saved;
+      return result;
+    } catch (error) {
+      throw new HttpException(
+        'Failed to update trainer',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  // Delete trainer
+  async deleteTrainer(id: number): Promise<{ message: string }> {
+    const trainer = await this.trainerRepository.findOne({ where: { id } });
+
+    if (!trainer) {
+      throw new NotFoundException(`Trainer with ID ${id} not found`);
+    }
+
+    try {
+      await this.trainerRepository.remove(trainer);
+      return { message: `Trainer ${id} deleted successfully` };
+    } catch (error) {
+      throw new HttpException(
+        'Failed to delete trainer',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  // Get all trainers created by a specific admin (One to Many)
+  async getTrainersByAdmin(adminId: string): Promise<Partial<TrainerEntity>[]> {
+    const admin = await this.adminUserRepository.findOne({
+      where: { id: adminId },
+      relations: ['trainers'],  // One to Many — loads all trainers under this admin
+    });
+
+    if (!admin) {
+      throw new NotFoundException('Admin user not found');
+    }
+
+    return admin.trainers.map(({ password, ...rest }) => rest);
+  }
+
+  // ─── Announcements (mock array — no entity needed) ────────────────────────
+
+  createAnnouncement(dto: CreateAnnouncementDto) {
     const newAnnouncement: Announcement = {
       id: `ann_${announcementIdCounter++}`,
-      title: announcementDto.title,
-      body: announcementDto.body,
-      target_role: announcementDto.target_role,
+      title: dto.title,
+      body: dto.body,
+      target_role: dto.target_role,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       is_active: true,
@@ -166,48 +360,7 @@ export class AdminService {
     return { message: 'Announcement created successfully', announcement: newAnnouncement };
   }
 
-  // Additional helper methods for testing
-  getAllTrainers() {
-    return trainers.map(({ password, ...rest }) => rest);
-  }
-
   getAllAnnouncements() {
     return announcements;
-  }
-
-  // ─── Lab Task 3 — TypeORM: Category 2 operations ─────────────────────────
-
-  // Operation 1: Create a user
-  async createAdminUser(dto: CreateAdminUserDto): Promise<AdminUserEntity> {
-    const user = this.adminUserRepository.create({
-      fullName: dto.fullName ?? null,
-      phone: dto.phone,
-      isActive: dto.isActive ?? true,
-    });
-    // @BeforeInsert on the entity will auto-call generateId() before save
-    return await this.adminUserRepository.save(user);
-  }
-
-  // Operation 2: Modify the phone number of an existing user
-  async updatePhone(id: string, dto: UpdatePhoneDto): Promise<AdminUserEntity> {
-    const user = await this.adminUserRepository.findOne({ where: { id } });
-    if (!user) throw new NotFoundException(`User with ID ${id} not found`);
-    user.phone = dto.phone;
-    return await this.adminUserRepository.save(user);
-  }
-
-  // Operation 3: Retrieve users with null values in the fullName column
-  async getUsersWithNullFullName(): Promise<AdminUserEntity[]> {
-    return await this.adminUserRepository.find({
-      where: { fullName: IsNull() },
-    });
-  }
-
-  // Operation 4: Remove a user from the system based on their id
-  async removeAdminUser(id: string): Promise<{ message: string }> {
-    const user = await this.adminUserRepository.findOne({ where: { id } });
-    if (!user) throw new NotFoundException(`User with ID ${id} not found`);
-    await this.adminUserRepository.remove(user);
-    return { message: `User ${id} removed successfully` };
   }
 }

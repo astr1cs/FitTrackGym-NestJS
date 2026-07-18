@@ -3,7 +3,12 @@ import {
   Column,
   PrimaryColumn,
   BeforeInsert,
+  OneToOne,
+  OneToMany,
+  CreateDateColumn,
 } from 'typeorm';
+import { AdminProfileEntity } from './admin-profile.entity';
+import { TrainerEntity } from './trainer.entity';
 
 @Entity('admin_users')
 export class AdminUserEntity {
@@ -11,23 +16,34 @@ export class AdminUserEntity {
   @PrimaryColumn({ type: 'varchar', length: 20 })
   id: string;
 
-  // Category 2 — custom ID generated via @BeforeInsert hook
-  // Generates an ID in the format ADM-000001 before every insert
+  // Category 2 — custom ID via @BeforeInsert
   @BeforeInsert()
   generateId() {
     const timestamp = Date.now().toString().slice(-6);
     this.id = `ADM-${timestamp}`;
   }
 
-  // Category 2 — boolean column, default true
+  @Column({ type: 'varchar', length: 100, unique: true })
+  email: string;
+
+  @Column({ type: 'varchar', length: 255 })
+  password: string; // bcrypt hashed
+
   @Column({ type: 'boolean', default: true })
   isActive: boolean;
 
-  // Category 2 — nullable varchar
-  @Column({ type: 'varchar', length: 100, nullable: true })
-  fullName: string | null;
+  @CreateDateColumn()
+  createdAt: Date;
 
-  // Category 2 — bigint unsigned
-  @Column({ type: 'bigint', unsigned: true })
-  phone: number;
+  // ── Relationship 1: One to One → AdminProfile ──────────────────────────
+  @OneToOne(() => AdminProfileEntity, (profile) => profile.adminUser, {
+    cascade: true,
+  })
+  profile: AdminProfileEntity;
+
+  // ── Relationship 2: One to Many → Trainer ─────────────────────────────
+  @OneToMany(() => TrainerEntity, (trainer) => trainer.createdBy, {
+    cascade: true,
+  })
+  trainers: TrainerEntity[];
 }
