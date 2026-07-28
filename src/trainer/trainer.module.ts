@@ -1,0 +1,47 @@
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
+import { MailerModule } from '@nestjs-modules/mailer';
+
+import { TrainerController } from './trainer.controller';
+import { TrainerService } from './trainer.service';
+import { TrainerMailService } from './trainer-mail.service';
+import { JwtStrategy } from './strategies/jwt.strategy';
+
+import { TrainerEntity } from './entities/trainer.entity';
+import { TrainerProfileEntity } from './entities/trainer-profile.entity';
+import { ClassSessionEntity } from './entities/class-session.entity';
+
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([
+      TrainerEntity,
+      TrainerProfileEntity,
+      ClassSessionEntity,
+    ]),
+    PassportModule.register({ defaultStrategy: 'jwt' }),
+    JwtModule.register({
+      secret: process.env.JWT_SECRET || 'fittrack_jwt_secret',
+      signOptions: { expiresIn: '1d' },
+    }),
+    MailerModule.forRoot({
+      transport: {
+        host: process.env.MAIL_HOST || process.env.SMTP_HOST || 'smtp.gmail.com',
+        port: Number(process.env.MAIL_PORT) || Number(process.env.SMTP_PORT) || 587,
+        secure: false,
+        auth: {
+          user: process.env.MAIL_USER || process.env.SMTP_USER || 'merazuddin003@gmail.com',
+          pass: process.env.MAIL_PASS || process.env.SMTP_PASS || 'pwux snsj lmle hdcy',
+        },
+      },
+      defaults: {
+        from: process.env.MAIL_FROM || '"FitTrack Gym Trainer" <merazuddin003@gmail.com>',
+      },
+    }),
+  ],
+  controllers: [TrainerController],
+  providers: [TrainerService, TrainerMailService, JwtStrategy],
+  exports: [TrainerService, JwtStrategy, PassportModule],
+})
+export class TrainerModule {}
