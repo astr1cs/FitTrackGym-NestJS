@@ -1,9 +1,19 @@
-import { IsOptional, IsEmail, Matches, IsIn, MinLength } from 'class-validator';
+import {
+  IsOptional,
+  IsEmail,
+  Matches,
+  IsIn,
+  MinLength,
+  IsString,
+  IsNumber,
+} from 'class-validator';
 
-// Lab Task 2 — Pipes: Category 2
-// Used by the Trainer role's own self-service profile update (PATCH /trainer/profile)
 export class UpdateTrainerProfileDto {
-  // Category 2 rule — email must be required and contain aiub.edu domain
+  @IsOptional()
+  @IsString()
+  fullName?: string;
+
+  // Category 2 rule — email must contain aiub.edu domain
   @IsOptional()
   @IsEmail({}, { message: 'Invalid email format' })
   @Matches(/^[^\s@]+@aiub\.edu$/, {
@@ -30,4 +40,24 @@ export class UpdateTrainerProfileDto {
     message: 'Phone number must contain only numbers',
   })
   phone?: string;
+
+  @IsOptional()
+  @IsString()
+  bio?: string;
+
+  @IsOptional()
+  @IsString()
+  specialization?: string;
+
+  @IsOptional()
+  @IsString()
+  certification?: string;
+
+  @IsOptional()
+  @IsNumber()
+  experienceYears?: number;
+
+  @IsOptional()
+  @IsNumber()
+  hourlyRate?: number;
 }
