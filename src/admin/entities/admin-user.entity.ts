@@ -23,10 +23,10 @@ export class AdminUserEntity {
     this.id = `ADM-${timestamp}`;
   }
 
-  @Column({ type: 'varchar', length: 100, unique: true })
+  @Column({ type: 'varchar', length: 150, unique: true, nullable: true })
   email: string;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   password: string; // bcrypt hashed
 
   @Column({ type: 'boolean', default: true })

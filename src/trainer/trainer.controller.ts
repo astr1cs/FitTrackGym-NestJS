@@ -26,21 +26,22 @@ import { EmailValidationPipe } from './pipes/email-validation.pipe';
 export class TrainerController {
   constructor(private readonly trainerService: TrainerService) {}
 
-  // 1. POST /trainer/auth/register - Trainer Registration (BCrypt & Pipe)
+  // 1. POST /trainer/auth/register - Trainer Registration (Public, BCrypt & Pipe)
   @Post('auth/register')
   @UsePipes(new EmailValidationPipe())
   register(@Body() registerTrainerDto: RegisterTrainerDto) {
     return this.trainerService.register(registerTrainerDto);
   }
 
-  // 2. POST /trainer/auth/login - Trainer Login & JWT Token
+  // 2. POST /trainer/auth/login - Trainer Login (Public, BCrypt & JWT Issue)
   @Post('auth/login')
   login(@Body() loginTrainerDto: LoginTrainerDto) {
     return this.trainerService.login(loginTrainerDto);
   }
 
-  // 3. GET /trainer/classes - Get Classes (Query filter & pagination)
+  // 3. GET /trainer/classes - Get Classes (Protected by JwtAuthGuard)
   @Get('classes')
+  @UseGuards(JwtAuthGuard)
   getClasses(
     @Query('status') status?: string,
     @Query('page') page: number = 1,
@@ -53,14 +54,16 @@ export class TrainerController {
     });
   }
 
-  // 4. POST /trainer/classes - Schedule New Class Session
+  // 4. POST /trainer/classes - Schedule New Class Session (Protected by JwtAuthGuard)
   @Post('classes')
+  @UseGuards(JwtAuthGuard)
   createClass(@Body() createClassDto: CreateClassDto) {
     return this.trainerService.createClass(createClassDto);
   }
 
-  // 5. PUT /trainer/profile - Update Full Profile (One-to-One)
+  // 5. PUT /trainer/profile - Update Full Profile (Protected by JwtAuthGuard)
   @Put('profile')
+  @UseGuards(JwtAuthGuard)
   @UsePipes(new EmailValidationPipe())
   updateProfile(
     @Body() updateTrainerProfileDto: UpdateTrainerProfileDto,
@@ -70,8 +73,9 @@ export class TrainerController {
     return this.trainerService.updateProfile(updateTrainerProfileDto, trainerId);
   }
 
-  // 6. PATCH /trainer/classes/:id - Partial Update Class Session
+  // 6. PATCH /trainer/classes/:id - Partial Update Class Session (Protected by JwtAuthGuard)
   @Patch('classes/:id')
+  @UseGuards(JwtAuthGuard)
   updateClass(
     @Param('id') id: string,
     @Body() updateClassDto: UpdateClassDto,
@@ -79,14 +83,16 @@ export class TrainerController {
     return this.trainerService.updateClass(id, updateClassDto);
   }
 
-  // 7. DELETE /trainer/classes/:id - Cancel/Delete Class Session
+  // 7. DELETE /trainer/classes/:id - Cancel/Delete Class Session (Protected by JwtAuthGuard)
   @Delete('classes/:id')
+  @UseGuards(JwtAuthGuard)
   deleteClass(@Param('id') id: string) {
     return this.trainerService.deleteClass(id);
   }
 
-  // 8. POST /trainer/mail/send-schedule - Send Schedule Email via Google SMTP
+  // 8. POST /trainer/mail/send-schedule - Send Schedule Email via Google SMTP (Protected by JwtAuthGuard)
   @Post('mail/send-schedule')
+  @UseGuards(JwtAuthGuard)
   sendScheduleMail(@Body() dto: SendEmailDto) {
     return this.trainerService.sendScheduleMail(dto);
   }

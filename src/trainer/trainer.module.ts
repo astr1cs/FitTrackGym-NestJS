@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { MailerModule } from '@nestjs-modules/mailer';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { TrainerController } from './trainer.controller';
 import { TrainerService } from './trainer.service';
@@ -21,23 +22,31 @@ import { ClassSessionEntity } from './entities/class-session.entity';
       ClassSessionEntity,
     ]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
-    JwtModule.register({
-      secret: process.env.JWT_SECRET || 'fittrack_jwt_secret',
-      signOptions: { expiresIn: '1d' },
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        secret: config.get('JWT_SECRET') || 'fittrack_jwt_secret',
+        signOptions: { expiresIn: config.get('JWT_EXPIRES_IN') || '1d' },
+      }),
     }),
-    MailerModule.forRoot({
-      transport: {
-        host: process.env.MAIL_HOST || process.env.SMTP_HOST || 'smtp.gmail.com',
-        port: Number(process.env.MAIL_PORT) || Number(process.env.SMTP_PORT) || 587,
-        secure: false,
-        auth: {
-          user: process.env.MAIL_USER || process.env.SMTP_USER || 'merazuddin003@gmail.com',
-          pass: process.env.MAIL_PASS || process.env.SMTP_PASS || 'pwux snsj lmle hdcy',
+    MailerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        transport: {
+          host: config.get('MAIL_HOST') || 'smtp.gmail.com',
+          port: parseInt(config.get('MAIL_PORT') ?? '587'),
+          secure: false,
+          auth: {
+            user: config.get('MAIL_USER') || 'merazuddin003@gmail.com',
+            pass: config.get('MAIL_PASS') || 'pwux snsj lmle hdcy',
+          },
         },
-      },
-      defaults: {
-        from: process.env.MAIL_FROM || '"FitTrack Gym Trainer" <merazuddin003@gmail.com>',
-      },
+        defaults: {
+          from: config.get('MAIL_FROM') || '"FitTrack Admin" <merazuddin003@gmail.com>',
+        },
+      }),
     }),
   ],
   controllers: [TrainerController],
