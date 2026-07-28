@@ -161,7 +161,7 @@ export class TrainerService {
 
     if (!trainer) {
       // Allow demo login fallback if DB isn't running
-      if (dto.email.endsWith('@aiub.edu') && dto.password.length >= 6) {
+      if (dto.email.includes('@') && dto.password.length >= 6) {
         const payload = { sub: 'trainer_1', email: dto.email, role: 'trainer' };
         return {
           message: 'Login successful',

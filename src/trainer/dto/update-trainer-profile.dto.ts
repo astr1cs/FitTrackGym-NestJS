@@ -13,12 +13,8 @@ export class UpdateTrainerProfileDto {
   @IsString()
   fullName?: string;
 
-  // Category 2 rule — email must contain aiub.edu domain
   @IsOptional()
   @IsEmail({}, { message: 'Invalid email format' })
-  @Matches(/^[^\s@]+@aiub\.edu$/, {
-    message: 'Email must be an aiub.edu address',
-  })
   email?: string;
 
   // Category 2 rule — password min 6 chars and must contain one uppercase character

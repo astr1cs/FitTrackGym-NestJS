@@ -8,21 +8,19 @@ import {
 @Injectable()
 export class AiubEmailValidationPipe implements PipeTransform {
   transform(value: any, metadata: ArgumentMetadata) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
     if (typeof value === 'string') {
-      if (!value.includes('@') || !value.endsWith('aiub.edu')) {
-        throw new BadRequestException(
-          'Email Address field is required, and input must contain aiub.edu domain',
-        );
+      if (!emailRegex.test(value)) {
+        throw new BadRequestException('Email Address field must be a valid email format');
       }
       return value.trim().toLowerCase();
     }
 
     if (value && typeof value === 'object' && value.email) {
       const email = String(value.email);
-      if (!email.includes('@') || !email.endsWith('aiub.edu')) {
-        throw new BadRequestException(
-          'Email Address field is required, and input must contain aiub.edu domain',
-        );
+      if (!emailRegex.test(email)) {
+        throw new BadRequestException('Email Address field must be a valid email format');
       }
       value.email = email.trim().toLowerCase();
     }
