@@ -10,7 +10,7 @@ import {
 import { TrainerProfileEntity } from './trainer-profile.entity';
 import { ClassSessionEntity } from './class-session.entity';
 
-@Entity('trainers')
+@Entity('trainer_accounts')
 export class TrainerEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;

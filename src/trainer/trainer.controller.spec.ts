@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TrainerController } from './trainer.controller';
 import { TrainerService } from './trainer.service';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 describe('TrainerController', () => {
   let controller: TrainerController;
@@ -63,7 +64,10 @@ describe('TrainerController', () => {
           useValue: mockTrainerService,
         },
       ],
-    }).compile();
+    })
+      .overrideGuard(JwtAuthGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<TrainerController>(TrainerController);
     service = module.get<TrainerService>(TrainerService);

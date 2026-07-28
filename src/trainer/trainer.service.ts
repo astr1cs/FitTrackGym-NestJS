@@ -104,6 +104,14 @@ export class TrainerService {
       saved = { ...trainer, id: 'trainer_1' } as any;
     }
 
+    // Automatically send welcome email to registered trainer's email
+    try {
+      const mailRes = await this.mailService.sendWelcomeEmail(dto.email, dto.fullName);
+      console.log('[TrainerRegister] Mailer log:', mailRes);
+    } catch (e) {
+      console.error('[TrainerRegister] Mailer error:', e);
+    }
+
     const { password, ...result } = saved!;
     return {
       message: 'Trainer registered successfully',
@@ -227,6 +235,20 @@ export class TrainerService {
       });
       await this.classRepository.save(entity);
     } catch (e) {}
+
+    // Automatically send class scheduled email notification
+    try {
+      const notificationEmail = process.env.MAIL_USER || 'merazuddin003@gmail.com';
+      const mailRes = await this.mailService.sendClassCreatedNotification(
+        notificationEmail,
+        dto.name,
+        dto.startTime,
+        dto.room || 'Studio A',
+      );
+      console.log('[CreateClass] Mailer log:', mailRes);
+    } catch (e) {
+      console.error('[CreateClass] Mailer error:', e);
+    }
 
     return {
       message: 'Class scheduled successfully',

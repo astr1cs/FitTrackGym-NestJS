@@ -16,7 +16,7 @@ export class ClassSessionEntity {
   @Column({ type: 'varchar', length: 100 })
   name: string;
 
-  @Column()
+  @Column({ nullable: true })
   trainerId: string;
 
   @ManyToOne(() => TrainerEntity, (trainer) => trainer.classes, {
