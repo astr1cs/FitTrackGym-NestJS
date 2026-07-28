@@ -195,7 +195,7 @@ export class TrainerService {
       if (trainerId) {
         const trainer = await this.trainerRepository.findOne({
           where: { id: trainerId },
-          relations: ['profile'],
+          relations: { profile: true },
         });
         if (trainer) {
           const { password, ...res } = trainer;
@@ -233,7 +233,7 @@ export class TrainerService {
       if (trainerId) {
         const trainer = await this.trainerRepository.findOne({
           where: { id: trainerId },
-          relations: ['profile'],
+          relations: { profile: true },
         });
         if (trainer) {
           Object.assign(trainer, dto);
