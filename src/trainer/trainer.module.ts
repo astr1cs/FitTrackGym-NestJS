@@ -33,16 +33,16 @@ import { WorkoutPlanEntity } from './entities/workout-plan.entity';
     }),
     MailerModule.forRoot({
       transport: {
-        host: process.env.SMTP_HOST || 'smtp.gmail.com',
-        port: Number(process.env.SMTP_PORT) || 587,
+        host: process.env.MAIL_HOST || process.env.SMTP_HOST || 'smtp.gmail.com',
+        port: Number(process.env.MAIL_PORT) || Number(process.env.SMTP_PORT) || 587,
         secure: false,
         auth: {
-          user: process.env.SMTP_USER || 'trainer.fittrack@gmail.com',
-          pass: process.env.SMTP_PASS || 'google_app_password_placeholder',
+          user: process.env.MAIL_USER || process.env.SMTP_USER || 'merazuddin003@gmail.com',
+          pass: process.env.MAIL_PASS || process.env.SMTP_PASS || 'pwux snsj lmle hdcy',
         },
       },
       defaults: {
-        from: '"FitTrack Gym Trainer" <trainer.fittrack@gmail.com>',
+        from: process.env.MAIL_FROM || '"FitTrack Gym Trainer" <merazuddin003@gmail.com>',
       },
     }),
   ],
