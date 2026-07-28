@@ -1,0 +1,165 @@
+{
+	"info": {
+		"_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+		"name": "FitTrack Gym - Trainer Module API (8 Routes)",
+		"description": "Complete Postman collection for the Trainer Module 8 core endpoints.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Auth - Register Trainer",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"fullName\": \"Alex Carter\",\n  \"email\": \"alex.carter@gmail.com\",\n  \"password\": \"Coach123\",\n  \"phone\": \"01711223344\",\n  \"gender\": \"male\",\n  \"age\": 30,\n  \"specialization\": \"Strength & Conditioning\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/trainer/auth/register",
+					"host": ["{{base_url}}"],
+					"path": ["trainer", "auth", "register"]
+				}
+			}
+		},
+		{
+			"name": "2. Auth - Login Trainer",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"alex.carter@gmail.com\",\n  \"password\": \"Coach123\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/trainer/auth/login",
+					"host": ["{{base_url}}"],
+					"path": ["trainer", "auth", "login"]
+				}
+			}
+		},
+		{
+			"name": "3. Classes - Get All Classes",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/trainer/classes?status=scheduled&page=1&limit=10",
+					"host": ["{{base_url}}"],
+					"path": ["trainer", "classes"],
+					"query": [
+						{ "key": "status", "value": "scheduled" },
+						{ "key": "page", "value": "1" },
+						{ "key": "limit", "value": "10" }
+					]
+				}
+			}
+		},
+		{
+			"name": "4. Classes - Schedule Class Session",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Advanced Pilates\",\n  \"trainerId\": \"trainer_1\",\n  \"startTime\": \"2026-07-01T10:00:00.000Z\",\n  \"endTime\": \"2026-07-01T11:00:00.000Z\",\n  \"room\": \"Studio B\",\n  \"maxCapacity\": 12\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/trainer/classes",
+					"host": ["{{base_url}}"],
+					"path": ["trainer", "classes"]
+				}
+			}
+		},
+		{
+			"name": "5. Profile - Update Profile (PUT)",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"fullName\": \"Alex Carter\",\n  \"email\": \"alex.carter@gmail.com\",\n  \"specialization\": \"Master Strength & Conditioning\",\n  \"experienceYears\": 5,\n  \"hourlyRate\": 60\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/trainer/profile",
+					"host": ["{{base_url}}"],
+					"path": ["trainer", "profile"]
+				}
+			}
+		},
+		{
+			"name": "6. Classes - Update Class Session (PATCH)",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"room\": \"Studio C\",\n  \"maxCapacity\": 15\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/trainer/classes/class_1",
+					"host": ["{{base_url}}"],
+					"path": ["trainer", "classes", "class_1"]
+				}
+			}
+		},
+		{
+			"name": "7. Classes - Cancel Class Session (DELETE)",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/trainer/classes/class_1",
+					"host": ["{{base_url}}"],
+					"path": ["trainer", "classes", "class_1"]
+				}
+			}
+		},
+		{
+			"name": "8. Mailer - Send Schedule Notification (Google SMTP)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"recipientEmail\": \"member@example.com\",\n  \"subject\": \"Upcoming Yoga Session\",\n  \"messageContent\": \"Your Yoga class is scheduled for tomorrow at 10 AM in Studio A.\",\n  \"memberName\": \"Sarah Johnson\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/trainer/mail/send-schedule",
+					"host": ["{{base_url}}"],
+					"path": ["trainer", "mail", "send-schedule"]
+				}
+			}
+		}
+	]
+}
