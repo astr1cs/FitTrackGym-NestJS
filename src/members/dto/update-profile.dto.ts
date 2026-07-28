@@ -36,7 +36,7 @@ export class UpdateProfileDto
   @IsString()
   @IsNotEmpty({ message: 'Date of Birth is required' })
   @IsDateString({}, { message: 'Invalid date format' })
-  date_of_birth?: Date;
+  date_of_birth?: string;
 
   @IsOptional()
   @IsEnum(['Male', 'Female', 'Other'])
