@@ -4,20 +4,13 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AdminModule } from './admin/admin.module';
-import { TrainerModule } from './trainer/trainer.module';
-import { MembersModule } from './members/members.module';
 import { AdminUserEntity } from './admin/entities/admin-user.entity';
 import { AdminProfileEntity } from './admin/entities/admin-profile.entity';
 import { TrainerEntity } from './admin/entities/trainer.entity';
 
 @Module({
   imports: [
-    // Load .env globally
-    ConfigModule.forRoot({
-      isGlobal: true,
-    }),
-
-    // TypeORM using .env values
+    ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -32,10 +25,7 @@ import { TrainerEntity } from './admin/entities/trainer.entity';
         synchronize: true,
       }),
     }),
-
     AdminModule,
-    TrainerModule,
-    MembersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

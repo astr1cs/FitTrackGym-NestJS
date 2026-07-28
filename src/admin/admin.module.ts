@@ -18,16 +18,12 @@ import { TrainerEntity } from './entities/trainer.entity';
 @Module({
   imports: [
     ConfigModule,
-
     TypeOrmModule.forFeature([
       AdminUserEntity,
       AdminProfileEntity,
       TrainerEntity,
     ]),
-
     PassportModule.register({ defaultStrategy: 'jwt' }),
-
-    // JWT using .env
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -36,8 +32,6 @@ import { TrainerEntity } from './entities/trainer.entity';
         signOptions: { expiresIn: config.get('JWT_EXPIRES_IN') },
       }),
     }),
-
-    // Mailer using .env
     MailerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -57,19 +51,8 @@ import { TrainerEntity } from './entities/trainer.entity';
       }),
     }),
   ],
-  controllers: [
-    AdminController,
-    AuthController,
-  ],
-  providers: [
-    AdminService,
-    AuthService,
-    JwtStrategy,
-  ],
-  exports: [
-    JwtStrategy,
-    PassportModule,
-    JwtModule,
-  ],
+  controllers: [AdminController, AuthController],
+  providers: [AdminService, AuthService, JwtStrategy],
+  exports: [JwtStrategy, PassportModule, JwtModule],
 })
 export class AdminModule {}
