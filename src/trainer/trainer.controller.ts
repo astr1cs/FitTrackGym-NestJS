@@ -2,25 +2,82 @@ import {
   Controller,
   Get,
   Post,
+  Put,
   Patch,
   Delete,
   Body,
   Param,
   Query,
+  UseGuards,
+  UsePipes,
+  Req,
 } from '@nestjs/common';
 import { TrainerService } from './trainer.service';
+import { RegisterTrainerDto } from './dto/register-trainer.dto';
+import { LoginTrainerDto } from './dto/login-trainer.dto';
 import { CreateClassDto } from './dto/create-class.dto';
 import { UpdateClassDto } from './dto/update-class.dto';
 import { RecordAttendanceDto } from './dto/record-attendance.dto';
 import { UpdateTrainerProfileDto } from './dto/update-trainer-profile.dto';
+import { CreateWorkoutPlanDto } from './dto/create-workout-plan.dto';
 import { CreateTrainerUserDto } from './dto/create-trainer-user.dto';
 import { UpdateStatusDto } from './dto/update-status.dto';
+import { SendEmailDto } from './dto/send-email.dto';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { AiubEmailValidationPipe } from './pipes/aiub-email.pipe';
 
 @Controller('trainer')
 export class TrainerController {
   constructor(private readonly trainerService: TrainerService) {}
 
-  // Route 1: GET - Get all classes (with optional filters)
+  // ─── AUTHENTICATION (PUBLIC) ─────────────────────────────────────────────
+
+  // Route 1: POST /trainer/auth/register - Trainer Signup with BCrypt & Validation
+  @Post('auth/register')
+  @UsePipes(new AiubEmailValidationPipe())
+  register(@Body() registerTrainerDto: RegisterTrainerDto) {
+    return this.trainerService.register(registerTrainerDto);
+  }
+
+  // Route 2: POST /trainer/auth/login - Trainer Authentication & JWT Token
+  @Post('auth/login')
+  login(@Body() loginTrainerDto: LoginTrainerDto) {
+    return this.trainerService.login(loginTrainerDto);
+  }
+
+  // ─── PROFILE MANAGEMENT (ONE-TO-ONE) ─────────────────────────────────────
+
+  // Route 3: GET /trainer/profile - Get profile information
+  @Get('profile')
+  getProfile(@Req() req: any) {
+    const trainerId = req.user?.userId;
+    return this.trainerService.getProfile(trainerId);
+  }
+
+  // Route 4: PUT /trainer/profile - Update profile details with Category 2 validation
+  @Put('profile')
+  @UsePipes(new AiubEmailValidationPipe())
+  updateProfile(
+    @Body() updateTrainerProfileDto: UpdateTrainerProfileDto,
+    @Req() req: any,
+  ) {
+    const trainerId = req.user?.userId;
+    return this.trainerService.updateProfile(updateTrainerProfileDto, trainerId);
+  }
+
+  // Route 5: PATCH /trainer/profile - Partial profile update
+  @Patch('profile')
+  patchProfile(
+    @Body() updateTrainerProfileDto: UpdateTrainerProfileDto,
+    @Req() req: any,
+  ) {
+    const trainerId = req.user?.userId;
+    return this.trainerService.updateProfile(updateTrainerProfileDto, trainerId);
+  }
+
+  // ─── CLASS SESSION MANAGEMENT (ONE-TO-MANY) ──────────────────────────────
+
+  // Route 6: GET /trainer/classes - Get classes with filtering & pagination
   @Get('classes')
   getClasses(
     @Query('status') status?: string,
@@ -34,19 +91,19 @@ export class TrainerController {
     });
   }
 
-  // Route 2: POST - Schedule a new class session
+  // Route 7: POST /trainer/classes - Schedule a new class session
   @Post('classes')
   createClass(@Body() createClassDto: CreateClassDto) {
     return this.trainerService.createClass(createClassDto);
   }
 
-  // Route 3: GET - Get single class details
+  // Route 8: GET /trainer/classes/:id - Get single class session details
   @Get('classes/:id')
   getClassById(@Param('id') id: string) {
     return this.trainerService.getClassById(id);
   }
 
-  // Route 4: PATCH - Update class session details
+  // Route 9: PATCH /trainer/classes/:id - Update class session details
   @Patch('classes/:id')
   updateClass(
     @Param('id') id: string,
@@ -55,13 +112,15 @@ export class TrainerController {
     return this.trainerService.updateClass(id, updateClassDto);
   }
 
-  // Route 5: DELETE - Cancel/delete class session
+  // Route 10: DELETE /trainer/classes/:id - Cancel/delete class session
   @Delete('classes/:id')
   deleteClass(@Param('id') id: string) {
     return this.trainerService.deleteClass(id);
   }
 
-  // Route 6: POST - Record attendance for a class session
+  // ─── ATTENDANCE MANAGEMENT (MANY-TO-ONE) ─────────────────────────────────
+
+  // Route 11: POST /trainer/classes/:classId/attendance - Record member attendance
   @Post('classes/:classId/attendance')
   recordAttendance(
     @Param('classId') classId: string,
@@ -70,40 +129,61 @@ export class TrainerController {
     return this.trainerService.recordAttendance(classId, recordAttendanceDto);
   }
 
-  // Route 7: GET - Get attendance roster for a class session
+  // Route 12: GET /trainer/classes/:classId/attendance - Get attendance roster
   @Get('classes/:classId/attendance')
   getAttendance(@Param('classId') classId: string) {
     return this.trainerService.getAttendance(classId);
   }
 
-  // Route 8: GET - View client roster
+  // ─── CLIENT MANAGEMENT ──────────────────────────────────────────────────
+
+  // Route 13: GET /trainer/clients - View assigned clients
   @Get('clients')
   getClients() {
     return this.trainerService.getClients();
   }
 
-  // Route 9: GET - Get own profile
-  @Get('profile')
-  getProfile() {
-    return this.trainerService.getProfile();
+  // ─── WORKOUT PLANS (ONE-TO-MANY) ──────────────────────────────────────────
+
+  // Route 14: POST /trainer/workout-plans - Create workout plan for a member
+  @Post('workout-plans')
+  createWorkoutPlan(@Body() dto: CreateWorkoutPlanDto) {
+    return this.trainerService.createWorkoutPlan(dto);
   }
 
-  // Route 10: PATCH - Update own profile
-  // Lab Task 2 — Pipes: Category 2 rules (aiub.edu email, password uppercase, gender enum, numeric phone)
-  @Patch('profile')
-  updateProfile(@Body() updateTrainerProfileDto: UpdateTrainerProfileDto) {
-    return this.trainerService.updateProfile(updateTrainerProfileDto);
+  // Route 15: GET /trainer/workout-plans - Get created workout plans
+  @Get('workout-plans')
+  getWorkoutPlans() {
+    return this.trainerService.getWorkoutPlans();
   }
 
-  // ─── Lab Task 3 — TypeORM: Category 1 operations ─────────────────────────
+  // Route 16: DELETE /trainer/workout-plans/:id - Delete a workout plan
+  @Delete('workout-plans/:id')
+  deleteWorkoutPlan(@Param('id') id: string) {
+    return this.trainerService.deleteWorkoutPlan(id);
+  }
 
-  // Operation 1: Create a user
+  // ─── MAILER NOTIFICATIONS (GOOGLE SMTP) ───────────────────────────────────
+
+  // Route 17: POST /trainer/mail/send-schedule - Send schedule update email via Google SMTP
+  @Post('mail/send-schedule')
+  sendScheduleMail(@Body() dto: SendEmailDto) {
+    return this.trainerService.sendScheduleMail(dto);
+  }
+
+  // Route 18: POST /trainer/mail/send-reminder - Send member workout reminder email
+  @Post('mail/send-reminder')
+  sendReminderMail(@Body() dto: SendEmailDto) {
+    return this.trainerService.sendReminderMail(dto);
+  }
+
+  // ─── TYPEORM USERS (CATEGORY 1) ───────────────────────────────────────────
+
   @Post('users')
   createTrainerUser(@Body() createTrainerUserDto: CreateTrainerUserDto) {
     return this.trainerService.createTrainerUser(createTrainerUserDto);
   }
 
-  // Operation 2: Change the status of a user to either 'active' or 'inactive'
   @Patch('users/:id/status')
   updateStatus(
     @Param('id') id: string,
@@ -112,7 +192,6 @@ export class TrainerController {
     return this.trainerService.updateStatus(Number(id), updateStatusDto);
   }
 
-  // Operation 3: Retrieve a list of users based on status
   @Get('users')
   getUsersByStatus(@Query('status') status?: string) {
     return this.trainerService.getUsersByStatus(status);
