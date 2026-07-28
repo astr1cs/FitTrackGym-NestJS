@@ -1,0 +1,55 @@
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  OneToMany,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import { TrainerEntity } from './trainer.entity';
+import { AttendanceEntity } from './attendance.entity';
+
+@Entity('class_sessions')
+export class ClassSessionEntity {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Column({ type: 'varchar', length: 100 })
+  name: string;
+
+  @Column({ type: 'varchar', length: 100 })
+  trainerId: string;
+
+  @ManyToOne(() => TrainerEntity, (trainer) => trainer.classes, {
+    onDelete: 'SET NULL',
+    nullable: true,
+  })
+  trainer: TrainerEntity;
+
+  @Column({ type: 'varchar', length: 50 })
+  startTime: string;
+
+  @Column({ type: 'varchar', length: 50 })
+  endTime: string;
+
+  @Column({ type: 'varchar', length: 50, default: 'Studio A' })
+  room: string;
+
+  @Column({ type: 'integer', default: 15 })
+  maxCapacity: number;
+
+  @Column({ type: 'varchar', default: 'scheduled', length: 20 })
+  status: string;
+
+  @OneToMany(() => AttendanceEntity, (attendance) => attendance.classSession, {
+    cascade: true,
+  })
+  attendances: AttendanceEntity[];
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
+}
