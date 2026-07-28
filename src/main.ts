@@ -6,13 +6,14 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   
   // Enable validation globally
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-    }),
-  );
+  app.useGlobalPipes(new ValidationPipe({
+  whitelist: true,
+  forbidNonWhitelisted: true,
+  transform: true, // This is mandatory for Form Data
+  transformOptions: {
+    enableImplicitConversion: true, // This helps map Form Data types to your DTO
+  },
+}));
   
   app.enableCors();
   
