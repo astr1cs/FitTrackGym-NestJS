@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn,ManyToOne } from 'typeorm';
+import { Member } from './member.entity';
 
 @Entity('subscriptions')
 export class Subscription {
@@ -22,4 +23,8 @@ export class Subscription {
 
   @CreateDateColumn()
   created_at: Date;
+
+  // Must match the relation setup expected by TypeORM
+  @ManyToOne(() => Member, (member) => member.subscriptions, { onDelete: 'CASCADE' })
+  member!: Member;
 }

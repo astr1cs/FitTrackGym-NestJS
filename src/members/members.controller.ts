@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Headers, UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Headers, UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator,BadRequestException, Patch } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import 'multer';
 import { MembersService } from './members.service';
@@ -7,6 +7,7 @@ import { CreateGymClassDto } from './dto/create-gym-class.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { MembershipSubscriptionDto } from './dto/membership-subscription.dto';
+import { UpdateClassDto } from './dto/update-class.dto'; // Update path if your folder structure is different
 
 @Controller('members')
 export class MembersController {
@@ -25,13 +26,17 @@ export class MembersController {
   }
 
   // 1. GET - Get Profile
-  @Get('profile')
+ @Get('profile')
   async getProfile(@Headers('test-member-id') memberId: string) {
-    return await this.membersService.getProfile(memberId);
+    if (!memberId) {
+      throw new BadRequestException('Missing "test-member-id" header in Postman');
+    }
+    return this.membersService.getProfile(memberId);
   }
 
+
   // 2. PUT - Update Profile
-  @Put('profile')
+  @Patch('profile')
   @UseInterceptors(FileInterceptor('nidImage'))
   async updateProfile(
     @Headers('test-member-id') memberId: string,
@@ -45,6 +50,15 @@ export class MembersController {
     nidImage?: Express.Multer.File,
   ) {
     return await this.membersService.updateProfile(memberId, updateProfileDto, nidImage);
+  }
+
+  // PUT - Update Gym Class
+  @Put('classes/:id')
+  async updateClass(
+    @Param('id') classId: string,
+    @Body() updateClassDto: UpdateClassDto
+  ) {
+    return await this.membersService.updateClass(classId, updateClassDto);
   }
 
   // 3. GET - Browse Membership Plans

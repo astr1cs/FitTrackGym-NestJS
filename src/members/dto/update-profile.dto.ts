@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsEmail, IsEnum, Matches, IsEmpty, IsNotEmpty, IsDateString } from 'class-validator';
+import { IsOptional, IsString, IsEmail, IsEnum, Matches, IsNotEmpty, IsDateString } from 'class-validator';
 
 export class UpdateProfileDto 
 {
@@ -18,7 +18,7 @@ export class UpdateProfileDto
   {
      message: 'Email must be a valid .xyz domain address',
   })
-  email!: string; // Note: removed the '?' because it is no longer optional
+  email!: string; 
   
   //validate NID number format (10, 13, or 17 digit NID)
   @IsOptional()
@@ -57,4 +57,9 @@ export class UpdateProfileDto
   @IsOptional()
   @IsString()
   emergency_contact_phone?: string;
+
+  // Added NID Image Path
+  @IsOptional()
+  @IsString()
+  nidImagePath?: string;
 }

@@ -10,6 +10,7 @@ import { Member } from './entities/member.entity';
 import { Subscription } from './entities/subscription.entity';
 import { GymClass } from './entities/gym-class.entity';
 import { Booking } from './entities/booking.entity';
+import { UpdateClassDto } from './entities/update-class.dto';
 
 @Injectable()
 export class MembersService {
@@ -44,7 +45,7 @@ export class MembersService {
     const member = await this.memberRepo.findOne({
       where: { id: memberId },
       relations: {
-        subscription: true,
+        subscriptions: true,
         bookings: {
           gymClass: true,
         },
@@ -57,7 +58,7 @@ export class MembersService {
     return member;
   }
 
-  // Route 2: PUT Update Profile
+  // Route 2: PATCH Update Profile
   async updateProfile(memberId: string, dto: UpdateProfileDto, file?: Express.Multer.File) {
     const member = await this.getProfile(memberId);
     
@@ -70,6 +71,31 @@ export class MembersService {
     return {
       message: 'Profile updated successfully',
       profile: updatedMember,
+    };
+  }
+
+  // Route 2.1: PUT Update Class
+  async updateClass(classId: string, dto: UpdateClassDto) {
+    // 1. Find the existing class in your database
+    const gymClass = await this.classRepo.findOne({ where: { id: classId } });
+    
+    if (!gymClass) {
+      throw new NotFoundException('Gym class not found');
+    }
+
+    // 2. Overwrite EVERY property because it's a PUT request
+    gymClass.name = dto.name;
+    gymClass.trainer = dto.trainer;
+    gymClass.date = dto.date;
+    gymClass.time = dto.time;
+    gymClass.capacity = dto.capacity;
+
+    // 3. Save the replaced entity
+    const updatedClass = await this.classRepo.save(gymClass);
+
+    return {
+      message: 'Class completely updated via PUT',
+      gymClass: updatedClass
     };
   }
 
@@ -115,7 +141,7 @@ export class MembersService {
 
     await this.subscriptionRepo.save(newSubscription);
 
-    member.subscription = newSubscription;
+    member.subscriptions.push(newSubscription);
     await this.memberRepo.save(member);
 
     return {

@@ -5,44 +5,52 @@ import { Booking } from './booking.entity';
 @Entity('members')
 export class Member {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ nullable: true })
-  name: string;
+  name?: string;
 
   @Column({ unique: true })
-  email: string;
+  email!: string;
 
   @Column({ nullable: true })
-  phone: string;
+  nid?: string;
+
+  // Added this missing property
+  @Column({ nullable: true })
+  nidImagePath?: string;
 
   @Column({ nullable: true })
-  nid: string;
+  phone?: string;
 
   @Column({ nullable: true })
-  nidImagePath: string;
-
-  @Column({ type: 'date', nullable: true })
-  date_of_birth: string;
+  date_of_birth?: string;
 
   @Column({ nullable: true })
-  gender: string;
+  gender?: string;
 
   @Column({ nullable: true })
-  fitness_goal: string;
+  fitness_goal?: string;
 
-  // RELATIONSHIP 1: ONE-TO-ONE (A member has exactly 1 subscription)
-  @OneToOne(() => Subscription, { cascade: true, eager: true })
-  @JoinColumn()
-  subscription: Subscription;
+  @Column({ nullable: true })
+  address?: string;
 
-  // RELATIONSHIP 2: ONE-TO-MANY (A member can have many bookings)
+  @Column({ nullable: true })
+  emergency_contact_name?: string;
+
+  @Column({ nullable: true })
+  emergency_contact_phone?: string;
+
+  // Note: It must be plural -> 'subscriptions'
+  @OneToMany(() => Subscription, (subscription) => subscription.member)
+  subscriptions!: Subscription[];
+
   @OneToMany(() => Booking, (booking) => booking.member)
-  bookings: Booking[];
+  bookings!: Booking[];
 
   @CreateDateColumn()
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn()
-  updated_at: Date;
+  updated_at!: Date;
 }
