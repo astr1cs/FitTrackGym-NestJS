@@ -1,0 +1,174 @@
+{
+	"info": {
+		"_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+		"name": "FitTrack Gym - Trainer Module API",
+		"description": "Complete Postman collection for Trainer endpoints including Auth, Classes, Attendance, Profile, Workout Plans, and Google SMTP Mailer.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Auth - Register Trainer",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"fullName\": \"Alex Carter\",\n  \"email\": \"alex.carter@aiub.edu\",\n  \"password\": \"Coach123\",\n  \"phone\": \"01711223344\",\n  \"gender\": \"male\",\n  \"age\": 30,\n  \"specialization\": \"Strength Training\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/trainer/auth/register",
+					"host": ["{{base_url}}"],
+					"path": ["trainer", "auth", "register"]
+				}
+			}
+		},
+		{
+			"name": "Auth - Login Trainer",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"alex.carter@aiub.edu\",\n  \"password\": \"Coach123\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/trainer/auth/login",
+					"host": ["{{base_url}}"],
+					"path": ["trainer", "auth", "login"]
+				}
+			}
+		},
+		{
+			"name": "Classes - Get All Classes",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/trainer/classes?status=scheduled&page=1&limit=10",
+					"host": ["{{base_url}}"],
+					"path": ["trainer", "classes"],
+					"query": [
+						{ "key": "status", "value": "scheduled" },
+						{ "key": "page", "value": "1" },
+						{ "key": "limit", "value": "10" }
+					]
+				}
+			}
+		},
+		{
+			"name": "Classes - Schedule Class Session",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Advanced Pilates\",\n  \"trainerId\": \"trainer_1\",\n  \"startTime\": \"2026-07-01T10:00:00.000Z\",\n  \"endTime\": \"2026-07-01T11:00:00.000Z\",\n  \"room\": \"Studio B\",\n  \"maxCapacity\": 12\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/trainer/classes",
+					"host": ["{{base_url}}"],
+					"path": ["trainer", "classes"]
+				}
+			}
+		},
+		{
+			"name": "Classes - Update Class Details",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"room\": \"Studio C\",\n  \"maxCapacity\": 15\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/trainer/classes/class_1",
+					"host": ["{{base_url}}"],
+					"path": ["trainer", "classes", "class_1"]
+				}
+			}
+		},
+		{
+			"name": "Attendance - Record Attendance",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"memberId\": \"member_1\",\n  \"memberName\": \"Sarah Johnson\",\n  \"status\": \"present\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/trainer/classes/class_1/attendance",
+					"host": ["{{base_url}}"],
+					"path": ["trainer", "classes", "class_1", "attendance"]
+				}
+			}
+		},
+		{
+			"name": "Workout Plan - Create Plan",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"title\": \"Hypertrophy Upper Body Routine\",\n  \"memberId\": \"member_1\",\n  \"memberName\": \"Sarah Johnson\",\n  \"exercises\": \"Bench Press 4x10, Incline Dumbbell Press 3x12, Barbell Row 4x10\",\n  \"difficultyLevel\": \"Advanced\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/trainer/workout-plans",
+					"host": ["{{base_url}}"],
+					"path": ["trainer", "workout-plans"]
+				}
+			}
+		},
+		{
+			"name": "Mailer - Send Schedule Update (Google SMTP)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"recipientEmail\": \"member@example.com\",\n  \"subject\": \"Upcoming Yoga Session\",\n  \"messageContent\": \"Your Yoga class is scheduled for tomorrow at 10 AM in Studio A.\",\n  \"memberName\": \"Sarah Johnson\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/trainer/mail/send-schedule",
+					"host": ["{{base_url}}"],
+					"path": ["trainer", "mail", "send-schedule"]
+				}
+			}
+		}
+	]
+}
