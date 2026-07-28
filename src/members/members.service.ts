@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { CreateMemberDto } from './dto/create-member.dto';
+import { CreateGymClassDto } from './dto/create-gym-class.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { MembershipSubscriptionDto } from './dto/membership-subscription.dto';
@@ -17,6 +19,25 @@ export class MembersService {
     @InjectRepository(Booking) private readonly bookingRepo: Repository<Booking>,
     @InjectRepository(Subscription) private readonly subscriptionRepo: Repository<Subscription>,
   ) {}
+
+  // CREATE Member
+  async createMember(dto: CreateMemberDto) {
+    const existing = await this.memberRepo.findOne({ where: { email: dto.email } });
+    if (existing) {
+      throw new ConflictException('Email already exists');
+    }
+    const member = this.memberRepo.create(dto);
+    return await this.memberRepo.save(member);
+  }
+
+  // CREATE Gym Class
+  async createGymClass(dto: CreateGymClassDto) {
+    const gymClass = this.classRepo.create({
+      ...dto,
+      booked: 0, // Starts with 0 bookings
+    });
+    return await this.classRepo.save(gymClass);
+  }
 
   // Route 1: GET Profile (Fixed with TypeORM 0.3 Object Relations)
   async getProfile(memberId: string) {

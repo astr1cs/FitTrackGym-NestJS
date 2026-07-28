@@ -2,6 +2,8 @@ import { Controller, Get, Post, Put, Delete, Body, Param, Headers, UseIntercepto
 import { FileInterceptor } from '@nestjs/platform-express';
 import 'multer';
 import { MembersService } from './members.service';
+import { CreateMemberDto } from './dto/create-member.dto';
+import { CreateGymClassDto } from './dto/create-gym-class.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { MembershipSubscriptionDto } from './dto/membership-subscription.dto';
@@ -9,6 +11,18 @@ import { MembershipSubscriptionDto } from './dto/membership-subscription.dto';
 @Controller('members')
 export class MembersController {
   constructor(private readonly membersService: MembersService) {}
+
+  // POST - Create a new Member
+  @Post()
+  async createMember(@Body() dto: CreateMemberDto) {
+    return await this.membersService.createMember(dto);
+  }
+
+  // POST - Create a new Gym Class
+  @Post('classes')
+  async createGymClass(@Body() dto: CreateGymClassDto) {
+    return await this.membersService.createGymClass(dto);
+  }
 
   // 1. GET - Get Profile
   @Get('profile')
