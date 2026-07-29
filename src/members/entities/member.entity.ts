@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToOne, JoinColumn, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
 import { Subscription } from './subscription.entity';
 import { Booking } from './booking.entity';
 
@@ -9,6 +9,9 @@ export class Member {
 
   @Column({ nullable: true })
   name?: string;
+
+  @Column({ nullable: true }) // Adjust nullable depending on your migration requirements
+  password!: string;
 
   @Column({ unique: true })
   email!: string;

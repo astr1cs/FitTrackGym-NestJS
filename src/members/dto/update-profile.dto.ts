@@ -11,6 +11,10 @@ export class UpdateProfileDto
   })
   name?: string;
 
+  @IsNotEmpty({ message: 'Password is required' })
+  @IsString()
+  password!: string;
+
   //email must be required and contain @ and a .xyz domain
   @IsNotEmpty({ message: 'Email Address is required' })
   @IsEmail({}, { message: 'Invalid email format' })

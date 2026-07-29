@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Headers, UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator,BadRequestException, Patch } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body,Req, Param, Headers, UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator,BadRequestException, Patch,HttpException,HttpStatus } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import 'multer';
 import { MembersService } from './members.service';
@@ -8,38 +8,56 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { MembershipSubscriptionDto } from './dto/membership-subscription.dto';
 import { UpdateClassDto } from './dto/update-class.dto'; // Update path if your folder structure is different
+import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from './jwt-auth.guard';
 
 @Controller('members')
 export class MembersController {
   constructor(private readonly membersService: MembersService) {}
 
+  // 1. Login Route 
+  @Post('login')
+  async login(@Body() body: { email: string; password: string }) 
+  {
+    if (!body.email || !body.password) 
+    {
+      throw new HttpException('Email and password are required', HttpStatus.BAD_REQUEST);
+    }
+    return await this.membersService.login(body.email, body.password);
+  }
+
   // POST - Create a new Member
   @Post()
-  async createMember(@Body() dto: CreateMemberDto) {
+  async createMember(@Body() dto: CreateMemberDto) 
+  {
     return await this.membersService.createMember(dto);
   }
 
   // POST - Create a new Gym Class
   @Post('classes')
-  async createGymClass(@Body() dto: CreateGymClassDto) {
+  async createGymClass(@Body() dto: CreateGymClassDto) 
+  {
     return await this.membersService.createGymClass(dto);
   }
 
   // 1. GET - Get Profile
  @Get('profile')
-  async getProfile(@Headers('test-member-id') memberId: string) {
-    if (!memberId) {
+  async getProfile(@Headers('test-member-id') memberId: string)
+ {
+    if (!memberId) 
+    {
       throw new BadRequestException('Missing "test-member-id" header in Postman');
     }
     return this.membersService.getProfile(memberId);
   }
 
 
-  // 2. PUT - Update Profile
+  // 2. Protected Update Profile Route (Extracts memberId from JWT token automatically)
   @Patch('profile')
+  @UseGuards(JwtAuthGuard) // Blocks requests without a valid token
   @UseInterceptors(FileInterceptor('nidImage'))
   async updateProfile(
-    @Headers('test-member-id') memberId: string,
+    @Req() req: any, // Grabs the user object attached by the JWT Strategy
     @Body() updateProfileDto: UpdateProfileDto,
     @UploadedFile(
       new ParseFilePipe({
@@ -49,21 +67,27 @@ export class MembersController {
     )
     nidImage?: Express.Multer.File,
   ) {
+    // Extract the memberId securely from the token payload instead of a header!
+    const memberId = req.user.userId; 
+
     return await this.membersService.updateProfile(memberId, updateProfileDto, nidImage);
   }
+
 
   // PUT - Update Gym Class
   @Put('classes/:id')
   async updateClass(
     @Param('id') classId: string,
     @Body() updateClassDto: UpdateClassDto
-  ) {
+  ) 
+  {
     return await this.membersService.updateClass(classId, updateClassDto);
   }
 
   // 3. GET - Browse Membership Plans
   @Get('membership-plans')
-  browseMembershipPlans() {
+  browseMembershipPlans() 
+  {
     return this.membersService.browseMembershipPlans();
   }
 
@@ -72,13 +96,15 @@ export class MembersController {
   async subscribeToPlan(
     @Headers('test-member-id') memberId: string,
     @Body() subscriptionDto: MembershipSubscriptionDto,
-  ) {
+  ) 
+  {
     return await this.membersService.subscribeToPlan(memberId, subscriptionDto);
   }
 
   // 5. GET - Browse Classes
   @Get('classes')
-  async browseClasses() {
+  async browseClasses() 
+  {
     return await this.membersService.browseClasses();
   }
 
@@ -87,13 +113,15 @@ export class MembersController {
   async bookClass(
     @Headers('test-member-id') memberId: string,
     @Body() bookingDto: CreateBookingDto,
-  ) {
+  ) 
+  {
     return await this.membersService.bookClass(memberId, bookingDto);
   }
 
   // 7. GET - Get Member Bookings
   @Get('bookings')
-  async getMemberBookings(@Headers('test-member-id') memberId: string) {
+  async getMemberBookings(@Headers('test-member-id') memberId: string) 
+  {
     return await this.membersService.getMemberBookings(memberId);
   }
 
@@ -102,7 +130,8 @@ export class MembersController {
   async cancelBooking(
     @Headers('test-member-id') memberId: string,
     @Param('id') bookingId: string,
-  ) {
+  ) 
+  {
     return await this.membersService.cancelBooking(memberId, bookingId);
   }
 }
