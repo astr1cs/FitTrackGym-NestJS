@@ -25,7 +25,7 @@ export class MembersService
     private readonly jwtService: JwtService,
   ) {}
 
- // Enhanced Login with BCrypt verification and HttpException
+ // 1. Login with BCrypt verification and HttpException
   async login(email: string, pass: string) 
   {
     const member = await this.memberRepo.findOne({ where: { email } });
@@ -52,7 +52,7 @@ export class MembersService
   
   }
 
-  // CREATE Member
+  // 2.CREATE Member
   async createMember(dto: CreateMemberDto) {
   console.log('--------------------------------------------------');
   console.log('1. Raw password received from Postman:', dto.password);
@@ -89,7 +89,7 @@ export class MembersService
   };
 }
 
-  // CREATE Gym Class
+  // 3.CREATE Gym Class
   async createGymClass(dto: CreateGymClassDto) 
   {
     const gymClass = this.classRepo.create({
@@ -99,7 +99,7 @@ export class MembersService
     return await this.classRepo.save(gymClass);
   }
 
-  // Route 1: GET Profile (Fixed with TypeORM 0.3 Object Relations)
+  // 4: GET Profile 
   async getProfile(memberId: string) 
   {
     const member = await this.memberRepo.findOne({
@@ -119,7 +119,7 @@ export class MembersService
     return member;
   }
 
-  // Route 2: PATCH Update Profile
+  //  5: PATCH Update Profile
   async updateProfile(memberId: string, dto: UpdateProfileDto, file?: Express.Multer.File) {
     const member = await this.getProfile(memberId);
     
@@ -143,7 +143,7 @@ export class MembersService
     };
   }
 
-  // Route 2.1: PUT Update Class
+  // 6: PUT Update Class
   async updateClass(classId: string, dto: UpdateClassDto) 
   {
     // 1. Find the existing class in your database
@@ -170,7 +170,7 @@ export class MembersService
     };
   }
 
-  // Route 3: GET Browse Membership Plans
+  // 7: GET Browse Membership Plans
   browseMembershipPlans()
    {
     const membershipPlans = [
@@ -184,7 +184,7 @@ export class MembersService
     };
   }
 
-  // Route 4: POST Subscribe to Plan
+  // 8: POST Subscribe to Plan
   async subscribeToPlan(memberId: string, subscriptionDto: MembershipSubscriptionDto) 
   {
     const member = await this.getProfile(memberId);
@@ -225,13 +225,13 @@ export class MembersService
     };
   }
 
-  // Route 5: GET Browse Classes
+  // 9: GET Browse Classes
   async browseClasses() 
   {
     return await this.classRepo.find();
   }
 
-  // Route 6: POST Book a Class
+  // 10: POST Book a Class
   async bookClass(memberId: string, bookingDto: CreateBookingDto) 
   {
     const member = await this.getProfile(memberId);
@@ -272,7 +272,7 @@ export class MembersService
     };
   }
 
-  // Route 7: GET Member Bookings (Fixed relations object syntax)
+  // 11: GET Member Bookings (Fixed relations object syntax)
   async getMemberBookings(memberId: string) 
   {
     const memberBookings = await this.bookingRepo.find({
@@ -288,7 +288,7 @@ export class MembersService
     };
   }
 
-  // Route 8: DELETE Cancel Booking (Fixed relations object syntax)
+  // 12: DELETE Cancel Booking (Fixed relations object syntax)
   async cancelBooking(memberId: string, bookingId: string) 
   {
     const booking = await this.bookingRepo.findOne({
@@ -320,4 +320,25 @@ export class MembersService
 
     return { message: 'Booking cancelled successfully' };
   }
+
+
+  // Fetch subscription with member relation
+async getSubscriptionById(subscriptionId: string) 
+{
+  const subscription = await this.subscriptionRepo.findOne({
+    where: { id: subscriptionId },
+    relations: {
+      member: true, // Automatically joins and returns the connected Member entity
+    },
+  });
+
+  if (!subscription) 
+  {
+    throw new NotFoundException(`Subscription with ID ${subscriptionId} not found`);
+  }
+
+  return subscription;
+}
+
+
 }

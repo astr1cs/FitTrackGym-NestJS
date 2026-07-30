@@ -26,21 +26,21 @@ export class MembersController {
     return await this.membersService.login(body.email, body.password);
   }
 
-  // POST - Create a new Member
+  // 2.POST - Create a new Member
   @Post()
   async createMember(@Body() dto: CreateMemberDto) 
   {
     return await this.membersService.createMember(dto);
   }
 
-  // POST - Create a new Gym Class
+  // 3.POST - Create a new Gym Class
   @Post('classes')
   async createGymClass(@Body() dto: CreateGymClassDto) 
   {
     return await this.membersService.createGymClass(dto);
   }
 
-  // 1. GET - Get Profile
+  // 4. GET - Get Profile
  @Get('profile')
   async getProfile(@Headers('test-member-id') memberId: string)
  {
@@ -52,7 +52,7 @@ export class MembersController {
   }
 
 
-  // 2. Protected Update Profile Route (Extracts memberId from JWT token automatically)
+  // 5. Protected Update Profile Route (Extracts memberId from JWT token automatically)
   @Patch('profile')
   @UseGuards(JwtAuthGuard) // Blocks requests without a valid token
   @UseInterceptors(FileInterceptor('nidImage'))
@@ -74,7 +74,7 @@ export class MembersController {
   }
 
 
-  // PUT - Update Gym Class
+  // 6.PUT - Update Gym Class
   @Put('classes/:id')
   async updateClass(
     @Param('id') classId: string,
@@ -84,14 +84,14 @@ export class MembersController {
     return await this.membersService.updateClass(classId, updateClassDto);
   }
 
-  // 3. GET - Browse Membership Plans
+  // 7. GET - Browse Membership Plans
   @Get('membership-plans')
   browseMembershipPlans() 
   {
     return this.membersService.browseMembershipPlans();
   }
 
-  // 4. POST - Subscribe to Plan
+  // 8. POST - Subscribe to Plan
   @Post('membership/subscribe')
   async subscribeToPlan(
     @Headers('test-member-id') memberId: string,
@@ -101,14 +101,16 @@ export class MembersController {
     return await this.membersService.subscribeToPlan(memberId, subscriptionDto);
   }
 
-  // 5. GET - Browse Classes
+  
+
+  // 9. GET - Browse Classes
   @Get('classes')
   async browseClasses() 
   {
     return await this.membersService.browseClasses();
   }
 
-  // 6. POST - Book a Class
+  // 10. POST - Book a Class
   @Post('bookings')
   async bookClass(
     @Headers('test-member-id') memberId: string,
@@ -118,14 +120,14 @@ export class MembersController {
     return await this.membersService.bookClass(memberId, bookingDto);
   }
 
-  // 7. GET - Get Member Bookings
+  // 11. GET - Get Member Bookings
   @Get('bookings')
   async getMemberBookings(@Headers('test-member-id') memberId: string) 
   {
     return await this.membersService.getMemberBookings(memberId);
   }
 
-  // 8. DELETE - Cancel Booking
+  // 12. DELETE - Cancel Booking
   @Delete('bookings/:id')
   async cancelBooking(
     @Headers('test-member-id') memberId: string,
@@ -134,4 +136,13 @@ export class MembersController {
   {
     return await this.membersService.cancelBooking(memberId, bookingId);
   }
+
+  
+  // GET - Find subscription and member details by Subscription ID
+  @Get('subscriptions/:id')
+  async getSubscriptionById(@Param('id') subscriptionId: string)
+ {
+  return await this.membersService.getSubscriptionById(subscriptionId);
+ }
+
 }
