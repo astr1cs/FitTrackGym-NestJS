@@ -13,6 +13,7 @@ import { Booking } from './entities/booking.entity';
 import { UpdateClassDto } from './entities/update-class.dto';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt'; // Import bcrypt for password hashing
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class MembersService 
@@ -23,6 +24,7 @@ export class MembersService
     @InjectRepository(Booking) private readonly bookingRepo: Repository<Booking>,
     @InjectRepository(Subscription) private readonly subscriptionRepo: Repository<Subscription>,
     private readonly jwtService: JwtService,
+    private readonly mailService: MailService, // Inject the mail service
   ) {}
 
  // 1. Login with BCrypt verification and HttpException
@@ -52,42 +54,50 @@ export class MembersService
   
   }
 
-  // 2.CREATE Member
-  async createMember(dto: CreateMemberDto) {
-  console.log('--------------------------------------------------');
-  console.log('1. Raw password received from Postman:', dto.password);
+  // 2. CREATE Member
+  async createMember(dto: CreateMemberDto) 
+  {
+    console.log('--------------------------------------------------');
+    console.log('1. Raw password received from Postman:', dto.password);
 
-  const existing = await this.memberRepo.findOne({ where: { email: dto.email } });
-  if (existing) {
-    throw new HttpException('Email already exists', HttpStatus.CONFLICT);
+    const existing = await this.memberRepo.findOne({ where: { email: dto.email } });
+    if (existing)
+   {
+      throw new HttpException('Email already exists', HttpStatus.CONFLICT);
+    }
+
+    // Ensure 'await' is present so it finishes hashing before moving on!
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(dto.password, saltRounds);
+    console.log('2. Successfully generated BCrypt hash:', hashedPassword);
+
+    // Manually map fields to completely block any plain-text leaking
+    const newMember = this.memberRepo.create({
+      name: dto.name,
+      email: dto.email,
+      phone: dto.phone,
+      password: hashedPassword, // Explicitly passing the hash here
+    });
+
+    const savedMember = await this.memberRepo.save(newMember);
+    console.log('3. Password saved in database record:', savedMember.password);
+    console.log('--------------------------------------------------');
+
+    // Trigger the Welcome Email with safe string fallbacks
+    await this.mailService.sendWelcomeEmail(
+      savedMember.email ?? '', 
+      savedMember.name ?? 'Valued Member'
+    );
+
+    return {
+      message: 'Member created successfully with hashed password',
+      member: {
+        id: savedMember.id,
+        name: savedMember.name,
+        email: savedMember.email,
+      },
+    };
   }
-
-  // Ensure 'await' is present so it finishes hashing before moving on!
-  const saltRounds = 10;
-  const hashedPassword = await bcrypt.hash(dto.password, saltRounds);
-  console.log('2. Successfully generated BCrypt hash:', hashedPassword);
-
-  // Manually map fields to completely block any plain-text leaking
-  const newMember = this.memberRepo.create({
-    name: dto.name,
-    email: dto.email,
-    phone: dto.phone,
-    password: hashedPassword, // Explicitly passing the hash here
-  });
-
-  const savedMember = await this.memberRepo.save(newMember);
-  console.log('3. Password saved in database record:', savedMember.password);
-  console.log('--------------------------------------------------');
-
-  return {
-    message: 'Member created successfully with hashed password',
-    member: {
-      id: savedMember.id,
-      name: savedMember.name,
-      email: savedMember.email,
-    },
-  };
-}
 
   // 3.CREATE Gym Class
   async createGymClass(dto: CreateGymClassDto) 
@@ -120,7 +130,8 @@ export class MembersService
   }
 
   //  5: PATCH Update Profile
-  async updateProfile(memberId: string, dto: UpdateProfileDto, file?: Express.Multer.File) {
+  async updateProfile(memberId: string, dto: UpdateProfileDto, file?: Express.Multer.File) 
+  {
     const member = await this.getProfile(memberId);
     
     // If a password was passed in the update payload, hash it securely before saving!
@@ -237,21 +248,19 @@ export class MembersService
     const member = await this.getProfile(memberId);
     
     const gymClass = await this.classRepo.findOne({ where: { id: bookingDto.class_id } });
-    if (!gymClass) 
-    {
+    if (!gymClass) {
       throw new NotFoundException('Class not found');
     }
 
-    if (gymClass.booked >= gymClass.capacity) 
-    {
+    if (gymClass.booked >= gymClass.capacity) {
       throw new ConflictException('Class is full.');
     }
 
     const existingBooking = await this.bookingRepo.findOne({
       where: { member: { id: memberId }, gymClass: { id: bookingDto.class_id }, status: 'booked' },
     });
-    if (existingBooking) 
-    {
+    
+    if (existingBooking) {
       throw new ConflictException('Already booked for this class');
     }
 
@@ -266,12 +275,18 @@ export class MembersService
     gymClass.booked += 1;
     await this.classRepo.save(gymClass);
 
+    // Trigger the Booking Confirmation Email with type-safe fallbacks
+    await this.mailService.sendBookingConfirmation(
+      member.email ?? '', 
+      gymClass.name ?? 'Gym Class', 
+      gymClass.date ? gymClass.date.toString() : 'your scheduled time' 
+    );
+
     return {
       message: 'Class booked successfully',
       booking: { id: booking.id, status: booking.status },
     };
   }
-
   // 11: GET Member Bookings (Fixed relations object syntax)
   async getMemberBookings(memberId: string) 
   {
@@ -339,6 +354,7 @@ async getSubscriptionById(subscriptionId: string)
 
   return subscription;
 }
+
 
 
 }

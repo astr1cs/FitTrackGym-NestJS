@@ -3,8 +3,10 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor() {
+export class JwtStrategy extends PassportStrategy(Strategy) 
+{
+  constructor() 
+  {
     super({
       // Look for the token in the Authorization header as a "Bearer token"
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -14,7 +16,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   // If the token is valid, Passport attaches this returned object to req.user
-  async validate(payload: any) {
+  async validate(payload: any) 
+  {
     return { userId: payload.sub, email: payload.email };
   }
 }

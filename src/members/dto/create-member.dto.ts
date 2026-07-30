@@ -11,8 +11,8 @@ export class CreateMemberDto {
 
   @IsNotEmpty({ message: 'Email Address is required' })
   @IsEmail({}, { message: 'Invalid email format' })
-  @Matches(/^[^\s@]+@[^\s@]+\.xyz$/, {
-    message: 'Email must be a valid .xyz domain address',
+  @Matches(/^[^\s@]+@[^\s@]+\.com$/, {
+    message: 'Email must be a valid .com domain address',
   })
   email!: string;
 
